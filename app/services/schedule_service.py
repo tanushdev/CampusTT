@@ -4,6 +4,7 @@ Production service for timetable management and CSV bulk imports
 """
 import csv
 import io
+import re
 import uuid
 from datetime import datetime
 from typing import Optional, Dict, List, Any
@@ -160,13 +161,16 @@ class ScheduleService:
                 except UnicodeDecodeError: content = raw_data.decode("latin-1")
             
             stream = io.StringIO(content, newline=None)
-            # Try to detect delimiter
-            sample = content[:1024]
+            # Try to detect delimiter and handle TSV
+            sample = content[:4096]
             dialect = 'excel'
             if sample:
                 try:
-                    sniffer = csv.Sniffer()
-                    if ',' in sample or ';' in sample or '\t' in sample:
+                    # Check for tab separation which is common in some exports
+                    if '\t' in sample and sample.count('\t') > sample.count(','):
+                        dialect = 'excel-tab'
+                    else:
+                        sniffer = csv.Sniffer()
                         dialect = sniffer.sniff(sample)
                 except: dialect = 'excel'
             
@@ -215,13 +219,17 @@ class ScheduleService:
                             start_val = data.get('start_time') or data.get('start') or data.get('from') or data.get('start_at')
                             end_val = data.get('end_time') or data.get('end') or data.get('to') or data.get('end_at')
                             
+                        # Handle cases where From/To are like "9:00" without AM/PM but To is "5:00 PM"
                         start = self._normalize_time(start_val)
                         end = self._normalize_time(end_val)
                         
-                        class_code = data.get('class_code') or data.get('class') or data.get('batch') or data.get('division') or data.get('year')
+                        class_code = data.get('class_code') or data.get('class') or data.get('group') or data.get('batch') or data.get('division') or data.get('year')
                         subject = data.get('subject_name') or data.get('subject') or data.get('course') or data.get('module')
-                        faculty = data.get('instructor_name') or data.get('faculty') or data.get('teacher') or data.get('instructor') or data.get('prof')
+                        faculty = data.get('instructor_name') or data.get('instructor') or data.get('faculty') or data.get('teacher') or data.get('prof')
                         room = data.get('room_code') or data.get('room') or data.get('location') or data.get('room_no') or data.get('venue')
+                        
+                        # Strip quotes from room names like "J-104A1"
+                        if room: room = str(room).strip('"\' ')
                         
                         if day is None or not start or not end or not class_code:
                             missing = []
@@ -269,7 +277,16 @@ class ScheduleService:
 
     def _parse_day(self, day_str: Optional[str]) -> Optional[int]:
         if not day_str: return None
-        d = day_str.lower().strip()
+        d = str(day_str).lower().strip()
+        
+        # Handle "Day 1", "Day 2" formats
+        day_match = re.search(r'day\s*(\d+)', d)
+        if day_match:
+            try:
+                # Map Day 1 -> Mon (0), Day 2 -> Tue (1), etc.
+                return (int(day_match.group(1)) - 1) % 7
+            except: pass
+
         mapping = {'monday': 0, 'mon': 0, 'tuesday': 1, 'tue': 1, 'wednesday': 2, 'wed': 2, 'thursday': 3, 'thu': 3, 'friday': 4, 'fri': 4, 'saturday': 5, 'sat': 5, 'sunday': 6, 'sun': 6}
         try: return mapping.get(d) if d in mapping else int(d) % 7
         except: return None
