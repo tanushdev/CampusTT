@@ -1,7 +1,5 @@
 import os
-import pandas as pd
-import numpy as np
-from flask import current_app
+from flask import current_app, g
 from datetime import datetime
 import re
 import google.generativeai as genai
@@ -10,44 +8,66 @@ import spacy
 class QnAService:
     def __init__(self, db_path: str = None):
         self.db_path = db_path or current_app.config.get('DATABASE_PATH', 'campusiq.db')
+        # Try-except block for spacy to avoid hard crash if model is missing
         try:
             self.nlp = spacy.blank("en")
         except:
             self.nlp = None
 
+    def _get_connection(self):
+        """Helper to get DB connection based on environment"""
+        # Checks if we should use SQLite or PostgreSQL logic happens at app level
+        # For this service, we assume standard SQL query compatibility or simple logic
+        # Ideally, we should use SQLAlchemy from flask app if possible, but keeping it simple for now
+        # If using postgres, we might need a different connector or use the SQLAlchemy engine
+        pass
+
     def _get_timetable_data(self, college_id):
-        """Fetch all timetable entries for the college"""
+        """Fetch all timetable entries for the college as list of dicts"""
         try:
-            import sqlite3
-            conn = sqlite3.connect(self.db_path)
-            query = """
+            # Check if we are in Postgres mode (using SQLAlchemy engine usually provided in app)
+            # But here we are using raw queries. Let's try to leverage the existing db setup if possible.
+            # For simplicity in this "serverless size fix", let's assume we can get a connection.
+            # In production (Postgres), invalidating 'sqlite3' import is good.
+            
+            # Using SQLAlchemy engine from current_app if available
+            from sqlalchemy import text
+            db = current_app.extensions.get('sqlalchemy')
+            if not db:
+                return []
+
+            query = text("""
                 SELECT day_of_week, start_time, end_time, class_code, 
                        subject_name, instructor_name, room_code
                 FROM schedules 
-                WHERE college_id = ? AND is_deleted = 0
-            """
-            df = pd.read_sql_query(query, conn, params=[college_id])
-            conn.close()
+                WHERE college_id = :college_id AND is_deleted = 0
+            """)
             
-            if df.empty: return None
+            with db.engine.connect() as conn:
+                result = conn.execute(query, {"college_id": college_id})
+                rows = [dict(row._mapping) for row in result] # Convert Row to Dict
             
             days = {0: 'Monday', 1: 'Tuesday', 2: 'Wednesday', 3: 'Thursday', 4: 'Friday', 5: 'Saturday', 6: 'Sunday'}
-            df['day_name'] = df['day_of_week'].map(days)
-            return df
+            for row in rows:
+                row['day_name'] = days.get(row['day_of_week'])
+            
+            return rows
+
         except Exception as e:
             current_app.logger.error(f"Error loading timetable: {e}")
-            return None
+            return []
 
     def _get_user_name(self, user_id):
         """Get the full name of the user to match against instructor names"""
         try:
-            import sqlite3
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            cursor.execute("SELECT full_name FROM users WHERE user_id = ?", (user_id,))
-            res = cursor.fetchone()
-            conn.close()
-            return res[0] if res else None
+            from sqlalchemy import text
+            db = current_app.extensions.get('sqlalchemy')
+            if not db: return None
+
+            query = text("SELECT full_name FROM users WHERE user_id = :user_id")
+            with db.engine.connect() as conn:
+                result = conn.execute(query, {"user_id": user_id}).fetchone()
+                return result[0] if result else None
         except: return None
 
     # === STEP 1: QUERY UNDERSTANDING ===
@@ -74,6 +94,7 @@ class QnAService:
         if 'next' in query_lower: entities['relative_time'] = 'next'
         elif any(w in query_lower for w in ['current', 'now', 'right now']): entities['relative_time'] = 'current'
         elif 'tomorrow' in query_lower: entities['relative_time'] = 'tomorrow'
+        else: entities['relative_time'] = None # Explicitly set None if not found
         
         # Specific Time Detection (e.g., 03:30 PM)
         time_match = re.search(r'(\d{1,2})[:.]?(\d{2})?\s?(am|pm)', query_lower)
@@ -83,6 +104,8 @@ class QnAService:
             if time_match.group(3) == 'pm' and h < 12: h += 12
             if time_match.group(3) == 'am' and h == 12: h = 0
             entities['time'] = h * 60 + m
+        else:
+            entities['time'] = None
 
         # Day Detection
         days_map = {'mon': 0, 'tue': 1, 'wed': 2, 'thu': 3, 'fri': 4, 'sat': 5, 'sun': 6}
@@ -101,8 +124,8 @@ class QnAService:
         return entities
 
     # === STEP 2: SEMANTIC SEARCH & FILTERING ===
-    def _semantic_filter(self, df, query, entities, user_name=None):
-        if df is None: return []
+    def _semantic_filter(self, rows, query, entities, user_name=None):
+        if not rows: return []
 
         now = datetime.now()
         target_day = now.weekday()
@@ -117,81 +140,96 @@ class QnAService:
 
         # Start with Day filtering - but if personal query and no day mentioned, search WHOLE week
         is_personal_query = entities['personal'] or any(w in query.lower() for w in ['my', 'me', 'i teach'])
-        
         has_day_mentioned = entities['days'] or entities['relative_time']
         
+        filtered_rows = []
         if is_personal_query and not has_day_mentioned:
-            # Fallback to whole week
-            filtered_df = df.copy()
+            filtered_rows = list(rows)
         else:
-            filtered_df = df[df['day_of_week'] == target_day].copy()
+            filtered_rows = [r for r in rows if r['day_of_week'] == target_day]
 
         # Personal filter logic
         if is_personal_query and user_name:
-            # Partial match for names (handles "Anjali" matching "Anjali Nambiar")
-            filtered_df = filtered_df[filtered_df['instructor_name'].str.contains(user_name.split()[0], case=False, na=False)]
+            # Partial match for names
+            u_name_part = user_name.split()[0].lower()
+            filtered_rows = [r for r in filtered_rows if u_name_part in (r.get('instructor_name') or '').lower()]
         
-        # If the dataframe became empty after personal filter (and it was a personal query), 
-        # that means we have NO records for this user today.
-        if filtered_df.empty and is_personal_query:
+        if not filtered_rows and is_personal_query:
             return []
 
         # Apply temporal logic
         if entities['relative_time'] == 'current':
             matches = []
-            for _, row in filtered_df.iterrows():
+            for row in filtered_rows:
                 try:
                     s = self._parse_time_min(row['start_time'])
                     e = self._parse_time_min(row['end_time'])
-                    if s <= now_min < e: matches.append(dict(row))
+                    if s <= now_min < e: matches.append(row)
                 except: continue
             if matches: return matches
         
         elif entities['relative_time'] == 'next':
-            filtered_df['start_min'] = filtered_df['start_time'].apply(self._parse_time_min)
-            next_classes = filtered_df[filtered_df['start_min'] >= now_min].sort_values('start_min')
-            if not next_classes.empty: return next_classes.head(3).to_dict('records')
+            next_classes = []
+            for row in filtered_rows:
+                 s = self._parse_time_min(row['start_time'])
+                 if s >= now_min:
+                     row['_start_min'] = s # Temp key for sorting
+                     next_classes.append(row)
+            
+            # Sort by start time
+            next_classes.sort(key=lambda x: x['_start_min'])
+            
+            # Remove temp key and return top 3
+            result = []
+            for r in next_classes[:3]:
+                r_copy = r.copy()
+                if '_start_min' in r_copy: del r_copy['_start_min']
+                result.append(r_copy)
+            
+            if result: return result
 
         # Generic Semantic Weighting
-        scores = np.zeros(len(filtered_df))
-        # Filter out common stop words that don't help in DB record matching
+        # Filter out common stop words
         stop_words = {'show', 'me', 'the', 'what', 'is', 'when', 'today', 'tomorrow', 'schedule', 'table', 'tell'}
         query_words = [w for w in query.lower().split() if w not in stop_words and len(w) > 1]
         
-        filtered_df = filtered_df.reset_index(drop=True)
-        
-        # IF NO SPECIFIC KEYWORDS after filtering stop words, but it's a "Today" or "Tomorrow" query
-        # Just return the first few classes of that day
-        if not query_words and not filtered_df.empty:
-            return filtered_df.head(5).to_dict('records')
+        # IF NO SPECIFIC KEYWORDS and simple time query, return first few
+        if not query_words and len(filtered_rows) > 0:
+            return filtered_rows[:5]
 
-        for i, row in filtered_df.iterrows():
-            row_str = f"{row['class_code']} {row['subject_name']} {row['instructor_name']} {row['room_code']}".lower()
+        scored_rows = []
+        for row in filtered_rows:
+            score = 0
+            # Construct a string representation for searching
+            row_str = f"{row.get('class_code','')} {row.get('subject_name','')} {row.get('instructor_name','')} {row.get('room_code','')}".lower()
             
-            # Boost if specific room or class matched in entities
-            if row['room_code'] in entities['rooms']: scores[i] += 20
-            if any(c in row['class_code'].upper() for c in entities['classes']): scores[i] += 15
+            # Boost if specific entities matched
+            if row.get('room_code') in entities['rooms']: score += 20
+            if any(c in str(row.get('class_code','')).upper() for c in entities['classes']): score += 15
             
             # Keyword match
             for word in query_words:
                 if word in row_str:
-                    scores[i] += 5
+                    score += 5
                     # Exact word match boost
-                    if word in row_str.split(): scores[i] += 5
+                    if word in row_str.split(): score += 5
+            
+            if score > 0:
+                scored_rows.append((score, row))
 
-        top_indices = np.argsort(scores)[-5:][::-1]
-        results = []
-        for idx in top_indices:
-            if scores[idx] > 0: results.append(filtered_df.iloc[idx].to_dict())
+        # Sort by score descending
+        scored_rows.sort(key=lambda x: x[0], reverse=True)
+        results = [x[1] for x in scored_rows[:5]]
         
-        # Final fallback: if still nothing but we have day data, show summary
-        if not results and not filtered_df.empty and (entities['days'] or entities['relative_time']):
-             return filtered_df.head(3).to_dict('records')
+        # Final fallback
+        if not results and filtered_rows and (entities['days'] or entities['relative_time']):
+             return filtered_rows[:3]
 
         return results
 
     def _parse_time_min(self, t_str):
         try:
+            if not t_str: return 0
             t_str = t_str.upper().strip()
             is_pm = 'PM' in t_str
             is_am = 'AM' in t_str
@@ -224,7 +262,6 @@ class QnAService:
             response += f"- Teacher: {res.get('instructor_name')}\n\n"
         return response
 
-    # === STEP 3: RELEVANT Q&A RETRIEVED (TEXT FORMATTER) ===
     # === STEP 3: GENERATIVE AI (GEMINI) ===
     def _generate_ai_response(self, query, results, user_name=None):
         """
@@ -298,13 +335,13 @@ class QnAService:
         user_name = self._get_user_name(user_id) if user_id else None
         
         # 2. Pipeline: Data Retrieval & Filter
-        df = self._get_timetable_data(college_id)
+        rows = self._get_timetable_data(college_id)
         
         search_results = []
         if entities['intent'] == 'free_rooms':
             search_results = self._handle_free_rooms(college_id, entities)
         else:
-            search_results = self._semantic_filter(df, query, entities, user_name)
+            search_results = self._semantic_filter(rows, query, entities, user_name)
         
         # 3. Pipeline: AI Generation (RAG)
         response = self._generate_ai_response(query, search_results, user_name)
@@ -322,35 +359,41 @@ class QnAService:
     def _handle_free_rooms(self, college_id, entities):
         """Logic to calculate free rooms now"""
         try:
-            import sqlite3
-            conn = sqlite3.connect(self.db_path)
+            from sqlalchemy import text
+            db = current_app.extensions.get('sqlalchemy')
+            if not db: return []
             
             # Get all rooms
-            cursor = conn.cursor()
-            cursor.execute("SELECT room_code FROM rooms WHERE college_id = ? AND is_deleted = 0", (college_id,))
-            all_rooms = {row[0] for row in cursor.fetchall()}
-            
-            # Get busy rooms now
-            now = datetime.now()
-            target_day = now.weekday()
-            now_min = now.hour * 60 + now.minute
-            
-            cursor.execute("""
-                SELECT room_code, start_time, end_time FROM schedules 
-                WHERE college_id = ? AND day_of_week = ? AND is_deleted = 0
-            """, (college_id, target_day))
-            
-            busy_rooms = set()
-            for room, start, end in cursor.fetchall():
-                try:
-                    s = self._parse_time_min(start)
-                    e = self._parse_time_min(end)
-                    if s <= now_min < e:
-                        busy_rooms.add(room)
-                except: continue
+            with db.engine.connect() as conn:
+                res_all = conn.execute(text("SELECT room_code FROM rooms WHERE college_id = :cid AND is_deleted = 0"), {"cid": college_id})
+                all_rooms = {row[0] for row in res_all}
                 
-            free_rooms = list(all_rooms - busy_rooms)
-            conn.close()
+                # Get busy rooms now
+                now = datetime.now()
+                target_day = now.weekday()
+                now_min = now.hour * 60 + now.minute
+                
+                res_busy = conn.execute(text("""
+                    SELECT room_code, start_time, end_time FROM schedules 
+                    WHERE college_id = :cid AND day_of_week = :day AND is_deleted = 0
+                """), {"cid": college_id, "day": target_day})
+                
+                busy_rooms = set()
+                for row in res_busy:
+                    # Access by index or name depending on driver
+                    # SQLAlchemy Rows are tuple-like
+                    r_code = row[0]
+                    start = row[1]
+                    end = row[2]
+                    
+                    try:
+                        s = self._parse_time_min(start)
+                        e = self._parse_time_min(end)
+                        if s <= now_min < e:
+                            busy_rooms.add(r_code)
+                    except: continue
+                    
+                free_rooms = list(all_rooms - busy_rooms)
             
             return [{ 'room_code': r, 'day_name': 'Today', 'subject_name': 'FREE' } for r in sorted(free_rooms)[:15]]
         except Exception as e:
