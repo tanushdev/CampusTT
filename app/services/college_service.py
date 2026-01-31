@@ -317,7 +317,7 @@ class CollegeService:
                 conn.commit()
                 
                 self._log_audit(college_id=cid_uuid, action='UPDATE_BRANDING', entity_type='college', entity_id=cid_uuid,
-                                old_value=json.dumps(dict(row)), new_value=json.dumps(data), summary="Branding updated")
+                                old_value=json.dumps(dict(row._mapping)), new_value=json.dumps(data), summary="Branding updated")
                 return {'success': True}
             except Exception as e:
                 conn.rollback()
@@ -335,7 +335,7 @@ class CollegeService:
             if not res: return {'error': 'NOT_FOUND'}
             row = res._mapping
             can_edit = user['role'] == 'SUPER_ADMIN' or (user['role'] == 'COLLEGE_ADMIN' and user['college_id'] == college_id)
-            return {**dict(row), 'college_id': str(row['college_id']), 'can_edit': can_edit}
+            return {**dict(row._mapping), 'college_id': str(row['college_id']), 'can_edit': can_edit}
             
     def get_college_by_domain(self, email_domain: str) -> Optional[Dict]:
         db = current_app.extensions['sqlalchemy']

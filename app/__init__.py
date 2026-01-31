@@ -191,12 +191,15 @@ def _register_error_handlers(app):
     
     @app.errorhandler(500)
     def handle_500(error):
+        import traceback
         app.logger.error(f'Internal server error: {error}')
+        app.logger.error(traceback.format_exc())
         return jsonify({
             'success': False,
             'error': True,
             'code': 'INTERNAL_ERROR',
-            'message': 'An internal server error occurred'
+            'message': 'An internal server error occurred',
+            'details': str(error) if app.debug else None
         }), 500
 
 
