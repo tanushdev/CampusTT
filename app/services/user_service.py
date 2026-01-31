@@ -36,7 +36,7 @@ class UserService:
         
         db = current_app.extensions['sqlalchemy']
         with db.engine.connect() as conn:
-            uid_uuid = uuid.UUID(user_id)
+            uid_uuid = uuid.UUID(str(user_id))
             query = text("""
                 SELECT u.user_id, u.email, u.full_name, u.first_name, u.last_name,
                        u.avatar_url, u.phone, u.status, u.email_verified,
@@ -90,8 +90,8 @@ class UserService:
             if not update_data: return {'error': 'VALIDATION'}
             
             set_clause = ', '.join([f"{k} = :{k}" for k in update_data.keys()])
-            uid_uuid = uuid.UUID(user_id)
-            params = {**update_data, "now": datetime.utcnow(), "uby": uuid.UUID(current_user['user_id']), "uid": uid_uuid}
+            uid_uuid = uuid.UUID(str(user_id))
+            params = {**update_data, "now": datetime.utcnow(), "uby": uuid.UUID(str(current_user['user_id'])), "uid": uid_uuid}
             
             result = conn.execute(text(f"UPDATE users SET {set_clause}, updated_at = :now, updated_by = :uby WHERE user_id = :uid AND is_deleted = 0"), params)
             conn.commit()
@@ -111,7 +111,7 @@ class UserService:
                 res = conn.execute(text("SELECT COUNT(*) FROM users WHERE is_deleted = 0")).fetchone()
                 return {'total_users': res[0]}
             
-            target_cid = uuid.UUID(college_id or current_user['college_id'])
+            target_cid = uuid.UUID(str(college_id or current_user['college_id']))
             stats = {}
             for role in ('FACULTY', 'STAFF', 'STUDENT'):
                 res = conn.execute(text("""
@@ -129,8 +129,8 @@ class UserService:
             return {'error': 'ACCESS_DENIED'}
         
         fixed_cid = None
-        if current_user['role'] in ('COLLEGE_ADMIN', 'FACULTY', 'STUDENT'): fixed_cid = uuid.UUID(current_user['college_id'])
-        elif current_user['role'] == 'SUPER_ADMIN' and college_id_filter: fixed_cid = uuid.UUID(college_id_filter)
+        if current_user['role'] in ('COLLEGE_ADMIN', 'FACULTY', 'STUDENT'): fixed_cid = uuid.UUID(str(current_user['college_id']))
+        elif current_user['role'] == 'SUPER_ADMIN' and college_id_filter: fixed_cid = uuid.UUID(str(college_id_filter))
         
         db = current_app.extensions['sqlalchemy']
         with db.engine.connect() as conn:
@@ -182,9 +182,9 @@ class UserService:
                         transaction.rollback()
                         return {'error': 'ACCESS_DENIED'}
                 
-                college_id = uuid.UUID(data.get('college_id')) if data.get('college_id') else (uuid.UUID(current_user['college_id']) if current_user['college_id'] else None)
+                college_id = uuid.UUID(str(data.get('college_id'))) if data.get('college_id') else (uuid.UUID(str(current_user['college_id'])) if current_user['college_id'] else None)
                 now = datetime.utcnow()
-                uby = uuid.UUID(current_user['user_id'])
+                uby = uuid.UUID(str(current_user['user_id']))
                 
                 if existing:
                     uid = existing._mapping['user_id']
@@ -209,7 +209,7 @@ class UserService:
         
         db = current_app.extensions['sqlalchemy']
         with db.engine.connect() as conn:
-            uid_uuid = uuid.UUID(user_id)
+            uid_uuid = uuid.UUID(str(user_id))
             target = conn.execute(text("SELECT u.college_id, r.role_code FROM users u JOIN roles r ON u.role_id = r.role_id WHERE u.user_id = :uid AND u.is_deleted = 0"), {"uid": uid_uuid}).fetchone()
             if not target: return {'error': 'NOT_FOUND'}
             tm = target._mapping
@@ -222,7 +222,7 @@ class UserService:
             cid = uuid.UUID(new_college_id) if new_college_id else tm['college_id']
             
             conn.execute(text("UPDATE users SET role_id = :rid, college_id = :cid, updated_by = :uby, updated_at = :now WHERE user_id = :uid"),
-                         {"rid": nr[0], "cid": cid, "uby": uuid.UUID(current_user['user_id']), "now": datetime.utcnow(), "uid": uid_uuid})
+                         {"rid": nr[0], "cid": cid, "uby": uuid.UUID(str(current_user['user_id'])), "now": datetime.utcnow(), "uid": uid_uuid})
             conn.commit()
             return {'success': True}
 
@@ -231,9 +231,9 @@ class UserService:
         if current_user['role'] not in ('SUPER_ADMIN', 'COLLEGE_ADMIN'): return {'error': 'ACCESS_DENIED'}
         db = current_app.extensions['sqlalchemy']
         with db.engine.connect() as conn:
-            uid_uuid = uuid.UUID(user_id)
+            uid_uuid = uuid.UUID(str(user_id))
             conn.execute(text("UPDATE users SET status = 'INACTIVE', updated_by = :uby, updated_at = :now WHERE user_id = :uid AND is_deleted = 0"),
-                         {"uby": uuid.UUID(current_user['user_id']), "now": datetime.utcnow(), "uid": uid_uuid})
+                         {"uby": uuid.UUID(str(current_user['user_id'])), "now": datetime.utcnow(), "uid": uid_uuid})
             conn.commit()
             return {'success': True}
 

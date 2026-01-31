@@ -23,7 +23,7 @@ class QnAService:
                            subject_name, instructor_name, room_code
                     FROM schedules 
                     WHERE college_id = :cid AND is_deleted = 0
-                """), {"cid": uuid.UUID(college_id)})
+                """), {"cid": uuid.UUID(str(college_id))})
                 rows = [dict(row._mapping) for row in result]
             
             days = {0: 'Monday', 1: 'Tuesday', 2: 'Wednesday', 3: 'Thursday', 4: 'Friday', 5: 'Saturday', 6: 'Sunday'}
@@ -38,7 +38,7 @@ class QnAService:
             if not user_id: return None
             db = current_app.extensions['sqlalchemy']
             with db.engine.connect() as conn:
-                res = conn.execute(text("SELECT full_name FROM users WHERE user_id = :uid"), {"uid": uuid.UUID(user_id)}).fetchone()
+                res = conn.execute(text("SELECT full_name FROM users WHERE user_id = :uid"), {"uid": uuid.UUID(str(user_id))}).fetchone()
                 return res[0] if res else None
         except: return None
 
@@ -155,7 +155,7 @@ class QnAService:
         try:
             db = current_app.extensions['sqlalchemy']
             with db.engine.connect() as conn:
-                cid_uuid = uuid.UUID(college_id)
+                cid_uuid = uuid.UUID(str(college_id))
                 all_r = {r._mapping['room_code'] for r in conn.execute(text("SELECT room_code FROM rooms WHERE college_id = :cid AND is_deleted = 0"), {"cid": cid_uuid})}
                 now = datetime.now()
                 now_min = now.hour * 60 + now.minute

@@ -30,7 +30,7 @@ class ScheduleService:
         """Get schedules with filtering and pagination"""
         db = current_app.extensions['sqlalchemy']
         with db.engine.connect() as conn:
-            cid_uuid = uuid.UUID(college_id)
+            cid_uuid = uuid.UUID(str(college_id))
             query_parts = ["FROM schedules WHERE college_id = :cid AND is_deleted = 0"]
             params = {"cid": cid_uuid}
             
@@ -63,7 +63,7 @@ class ScheduleService:
         time = self._normalize_time(time)
         db = current_app.extensions['sqlalchemy']
         with db.engine.connect() as conn:
-            cid_uuid = uuid.UUID(college_id)
+            cid_uuid = uuid.UUID(str(college_id))
             on_res = conn.execute(text("""
                 SELECT * FROM schedules 
                 WHERE college_id = :cid AND day_of_week = :day AND is_deleted = 0
@@ -87,7 +87,7 @@ class ScheduleService:
         db = current_app.extensions['sqlalchemy']
         with db.engine.connect() as conn:
             res = conn.execute(text("SELECT * FROM schedules WHERE schedule_id = :sid AND college_id = :cid AND is_deleted = 0"),
-                               {"sid": uuid.UUID(schedule_id), "cid": uuid.UUID(college_id)}).fetchone()
+                               {"sid": uuid.UUID(str(schedule_id)), "cid": uuid.UUID(str(college_id))}).fetchone()
             return dict(res._mapping) if res else None
 
     def create_schedule(self, college_id: str, data: Dict, created_by: str) -> Dict:
@@ -102,11 +102,11 @@ class ScheduleService:
                         day_of_week, start_time, end_time, created_by, created_at, updated_at
                     ) VALUES (:sid, :cid, :class, :sub, :inst, :room, :day, :start, :end, :cby, :now, :now)
                 """), {
-                    "sid": sid, "cid": uuid.UUID(college_id), "class": data.get('class_code'),
+                    "sid": sid, "cid": uuid.UUID(str(college_id)), "class": data.get('class_code'),
                     "sub": data.get('subject_name'), "inst": data.get('instructor_name'),
                     "room": data.get('room_code'), "day": data.get('day_of_week'),
                     "start": data.get('start_time'), "end": data.get('end_time'),
-                    "cby": uuid.UUID(created_by), "now": now
+                    "cby": uuid.UUID(str(created_by)), "now": now
                 })
                 conn.commit()
                 return {'success': True, 'schedule_id': str(sid)}
@@ -118,7 +118,7 @@ class ScheduleService:
         db = current_app.extensions['sqlalchemy']
         with db.engine.connect() as conn:
             conn.execute(text("UPDATE schedules SET is_deleted = 1, updated_by = :uby, updated_at = :now WHERE schedule_id = :sid AND college_id = :cid"),
-                         {"uby": uuid.UUID(deleted_by), "now": datetime.utcnow(), "sid": uuid.UUID(schedule_id), "cid": uuid.UUID(college_id)})
+                         {"uby": uuid.UUID(str(deleted_by)), "now": datetime.utcnow(), "sid": uuid.UUID(str(schedule_id)), "cid": uuid.UUID(str(college_id))})
             conn.commit()
 
     def check_conflicts(self, college_id: str, day_of_week: int, start_time: str, end_time: str,
@@ -126,12 +126,12 @@ class ScheduleService:
                         room_code: Optional[str] = None, exclude_id: Optional[str] = None) -> List[Dict]:
         db = current_app.extensions['sqlalchemy']
         with db.engine.connect() as conn:
-            cid_uuid = uuid.UUID(college_id)
+            cid_uuid = uuid.UUID(str(college_id))
             query = "SELECT * FROM schedules WHERE college_id = :cid AND day_of_week = :day AND is_deleted = 0 AND (start_time < :end AND end_time > :start)"
             params = {"cid": cid_uuid, "day": day_of_week, "end": end_time, "start": start_time}
             if exclude_id:
                 query += " AND schedule_id != :exclude"
-                params["exclude"] = uuid.UUID(exclude_id)
+                params["exclude"] = uuid.UUID(str(exclude_id))
             
             res = conn.execute(text(query), params)
             overlaps = [dict(row._mapping) for row in res]
@@ -162,8 +162,8 @@ class ScheduleService:
         with db.engine.connect() as conn:
             transaction = conn.begin()
             try:
-                cid_uuid = uuid.UUID(college_id)
-                uby_uuid = uuid.UUID(imported_by)
+                cid_uuid = uuid.UUID(str(college_id))
+                uby_uuid = uuid.UUID(str(imported_by))
                 now = datetime.utcnow()
                 
                 for row_idx, row in enumerate(reader):
@@ -226,7 +226,7 @@ class ScheduleService:
     def get_free_rooms(self, college_id: str, day: int, time: str) -> List[str]:
         db = current_app.extensions['sqlalchemy']
         with db.engine.connect() as conn:
-            cid_uuid = uuid.UUID(college_id)
+            cid_uuid = uuid.UUID(str(college_id))
             res_all = conn.execute(text("SELECT room_code FROM rooms WHERE college_id = :cid AND is_deleted = 0"), {"cid": cid_uuid})
             all_rooms = [row[0] for row in res_all]
             res_busy = conn.execute(text("SELECT DISTINCT room_code FROM schedules WHERE college_id = :cid AND day_of_week = :day AND is_deleted = 0 AND (start_time <= :time AND end_time > :time)"), {"cid": cid_uuid, "day": day, "time": time})
@@ -236,7 +236,7 @@ class ScheduleService:
     def get_current_status(self, college_id: str, day: int, time: str) -> Dict:
         db = current_app.extensions['sqlalchemy']
         with db.engine.connect() as conn:
-            cid_uuid = uuid.UUID(college_id)
+            cid_uuid = uuid.UUID(str(college_id))
             res_f = conn.execute(text("SELECT DISTINCT instructor_name FROM schedules WHERE college_id = :cid AND is_deleted = 0"), {"cid": cid_uuid})
             all_faculty = [{"name": r[0], "status": "FREE"} for r in res_f if r[0]]
             res_r = conn.execute(text("SELECT DISTINCT room_code FROM schedules WHERE college_id = :cid AND is_deleted = 0"), {"cid": cid_uuid})
@@ -257,5 +257,5 @@ class ScheduleService:
     def get_stats(self, college_id: str) -> Dict:
         db = current_app.extensions['sqlalchemy']
         with db.engine.connect() as conn:
-            res = conn.execute(text("SELECT COUNT(*) FROM schedules WHERE college_id = :cid AND is_deleted = 0"), {"cid": uuid.UUID(college_id)}).fetchone()
-            return {'total': res[0]}
+            res = conn.execute(text("SELECT COUNT(*) FROM schedules WHERE college_id = :cid AND is_deleted = 0"), {"cid": uuid.UUID(str(college_id))}).fetchone()
+            return {'total': int(res[0])}

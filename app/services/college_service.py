@@ -40,8 +40,8 @@ class CollegeService:
             pending = conn.execute(text("SELECT COUNT(*) FROM colleges WHERE status = 'PENDING' AND is_deleted = 0")).fetchone()[0]
             
             return {
-                'total_colleges': total,
-                'pending_approval': pending
+                'total_colleges': int(total),
+                'pending_approval': int(pending)
             }
 
     def get_all_colleges(self, 
@@ -137,7 +137,7 @@ class CollegeService:
                     "dom": data['email_domain'].lower(), "web": data.get('website_url'),
                     "addr": data.get('address'), "city": data.get('city'),
                     "state": data.get('state'), "phone": data.get('phone'),
-                    "cby": uuid.UUID(user['user_id']) if user['user_id'] else None,
+                    "cby": uuid.UUID(str(user['user_id'])) if user.get('user_id') else None,
                     "now": now
                 })
                 
@@ -165,7 +165,7 @@ class CollegeService:
                 """), {
                     "uid": admin_user_id, "email": admin_email, "name": f"{data['college_name']} Admin",
                     "rid": role_row[0], "cid": college_id,
-                    "cby": uuid.UUID(user['user_id']) if user['user_id'] else None,
+                    "cby": uuid.UUID(str(user['user_id'])) if user.get('user_id') else None,
                     "now": now
                 })
 
@@ -198,7 +198,7 @@ class CollegeService:
         with db.engine.connect() as conn:
             try:
                 # Check current status
-                cid_uuid = uuid.UUID(college_id)
+                cid_uuid = uuid.UUID(str(college_id))
                 res = conn.execute(
                     text("SELECT status, college_name FROM colleges WHERE college_id = :cid AND is_deleted = 0"),
                     {"cid": cid_uuid}
@@ -217,8 +217,8 @@ class CollegeService:
                         updated_by = :uby, updated_at = :now
                     WHERE college_id = :cid
                 """), {
-                    "aby": uuid.UUID(user['user_id']), "now": now,
-                    "uby": uuid.UUID(user['user_id']), "cid": cid_uuid
+                    "aby": uuid.UUID(str(user['user_id'])), "now": now,
+                    "uby": uuid.UUID(str(user['user_id'])), "cid": cid_uuid
                 })
                 conn.commit()
                 
@@ -243,12 +243,12 @@ class CollegeService:
         db = current_app.extensions['sqlalchemy']
         with db.engine.connect() as conn:
             try:
-                cid_uuid = uuid.UUID(college_id)
+                cid_uuid = uuid.UUID(str(college_id))
                 result = conn.execute(text("""
                     UPDATE colleges SET status = 'SUSPENDED', updated_by = :uby, updated_at = :now 
                     WHERE college_id = :cid AND is_deleted = 0
                 """), {
-                    "uby": uuid.UUID(user['user_id']), "now": datetime.utcnow(), "cid": cid_uuid
+                    "uby": uuid.UUID(str(user['user_id'])), "now": datetime.utcnow(), "cid": cid_uuid
                 })
                 conn.commit()
                 if result.rowcount == 0: return {'error': 'NOT_FOUND', 'message': 'College not found'}
@@ -268,13 +268,13 @@ class CollegeService:
         db = current_app.extensions['sqlalchemy']
         with db.engine.connect() as conn:
             try:
-                cid_uuid = uuid.UUID(college_id)
+                cid_uuid = uuid.UUID(str(college_id))
                 res = conn.execute(text("SELECT college_name FROM colleges WHERE college_id = :cid AND is_deleted = 0"), {"cid": cid_uuid}).fetchone()
                 if not res: return {'error': 'NOT_FOUND', 'message': 'College not found'}
                 row = res._mapping
 
                 now = datetime.utcnow()
-                uid_uuid = uuid.UUID(user['user_id'])
+                uid_uuid = uuid.UUID(str(user['user_id']))
                 
                 conn.execute(text("UPDATE colleges SET is_deleted = 1, status = 'DELETED', updated_by = :uby, updated_at = :now WHERE college_id = :cid"), {"uby": uid_uuid, "now": now, "cid": cid_uuid})
                 conn.execute(text("UPDATE users SET is_deleted = 1, updated_by = :uby, updated_at = :now WHERE college_id = :cid"), {"uby": uid_uuid, "now": now, "cid": cid_uuid})
@@ -300,7 +300,7 @@ class CollegeService:
         db = current_app.extensions['sqlalchemy']
         with db.engine.connect() as conn:
             try:
-                cid_uuid = uuid.UUID(college_id)
+                cid_uuid = uuid.UUID(str(college_id))
                 res = conn.execute(text("SELECT college_name, college_logo_url FROM colleges WHERE college_id = :cid AND is_deleted = 0"), {"cid": cid_uuid}).fetchone()
                 if not res: return {'error': 'NOT_FOUND'}
                 row = res._mapping
@@ -313,11 +313,11 @@ class CollegeService:
                                      college_logo_url = COALESCE(:logo, college_logo_url),
                                      updated_by = :uby, updated_at = :now
                     WHERE college_id = :cid AND is_deleted = 0
-                """), {"name": new_name, "logo": new_logo, "uby": uuid.UUID(user['user_id']), "now": datetime.utcnow(), "cid": cid_uuid})
+                """), {"name": new_name, "logo": new_logo, "uby": uuid.UUID(str(user['user_id'])), "now": datetime.utcnow(), "cid": cid_uuid})
                 conn.commit()
                 
                 self._log_audit(college_id=cid_uuid, action='UPDATE_BRANDING', entity_type='college', entity_id=cid_uuid,
-                                old_value=json.dumps(dict(row._mapping)), new_value=json.dumps(data), summary="Branding updated")
+                                old_value=json.dumps(dict(row)), new_value=json.dumps(data), summary="Branding updated")
                 return {'success': True}
             except Exception as e:
                 conn.rollback()
@@ -330,12 +330,12 @@ class CollegeService:
         
         db = current_app.extensions['sqlalchemy']
         with db.engine.connect() as conn:
-            cid_uuid = uuid.UUID(college_id)
+            cid_uuid = uuid.UUID(str(college_id))
             res = conn.execute(text("SELECT college_id, college_name, college_code, college_logo_url, website_url, status FROM colleges WHERE college_id = :cid AND is_deleted = 0"), {"cid": cid_uuid}).fetchone()
             if not res: return {'error': 'NOT_FOUND'}
             row = res._mapping
             can_edit = user['role'] == 'SUPER_ADMIN' or (user['role'] == 'COLLEGE_ADMIN' and user['college_id'] == college_id)
-            return {**dict(row._mapping), 'college_id': str(row['college_id']), 'can_edit': can_edit}
+            return {**dict(row), 'college_id': str(row['college_id']), 'can_edit': can_edit}
             
     def get_college_by_domain(self, email_domain: str) -> Optional[Dict]:
         db = current_app.extensions['sqlalchemy']
