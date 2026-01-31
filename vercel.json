@@ -20,16 +20,16 @@
             "dest": "run.py"
         },
         {
-            "src": "/(index.html|dashboard.html|college-admin-dashboard.html|super-admin-dashboard.html)",
-            "dest": "frontend/public/$1"
-        },
-        {
             "src": "/css/(.*)",
             "dest": "frontend/public/css/$1"
         },
         {
             "src": "/js/(.*)",
             "dest": "frontend/public/js/$1"
+        },
+        {
+            "src": "/(.*).html",
+            "dest": "frontend/public/$1.html"
         },
         {
             "src": "/",
