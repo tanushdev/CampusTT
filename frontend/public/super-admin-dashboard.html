@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin Dashboard | CampusIQ</title>
+
+    <!-- Premium Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+
+    <style>
+        :root {
+            --sidebar-width: 280px;
+            --header-height: 80px;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            display: flex;
+            margin: 0;
+            font-family: var(--font-body);
+            transition: background var(--transition-slow);
+        }
+
+        /* Sidebar Styles - Synchronized */
+        .dashboard-sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-soft);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            z-index: 1000;
+            padding: var(--space-xl);
+            transition: background var(--transition-slow);
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            margin-bottom: var(--space-3xl);
+            padding: 0 var(--space-sm);
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.9rem 1.2rem;
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all var(--transition-fast);
+            cursor: pointer;
+        }
+
+        .nav-link:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .nav-link.active {
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            box-shadow: var(--shadow-md);
+        }
+
+        .nav-link i {
+            width: 20px;
+            font-size: 1.1rem;
+            transition: color 0.2s;
+        }
+
+        .sidebar-footer {
+            padding-top: var(--space-xl);
+            border-top: 1px solid var(--border-soft);
+        }
+
+        /* Main Content */
+        .dashboard-main {
+            flex: 1;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+        }
+
+        .dashboard-header {
+            flex-shrink: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            margin: 1.5rem 1.5rem 1rem 1.5rem;
+            border: 1px solid var(--border-soft);
+            box-shadow: var(--shadow-sm);
+            transition: all var(--transition-slow);
+        }
+
+        .header-title-wrapper h1 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin: 0;
+            color: var(--text-primary);
+            font-family: var(--font-heading);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .header-status-box {
+            text-align: right;
+            padding: 0.5rem 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            border: 1px solid var(--border-soft);
+        }
+
+        .dashboard-content {
+            padding: 1rem 1.5rem 1.5rem 1.5rem;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        /* Mobile Adjustments */
+        .mobile-menu-btn {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-soft);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 1.1rem;
+            margin-right: 1rem;
+        }
+
+        #sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-sidebar {
+                position: fixed;
+                left: -100%;
+                top: 0;
+                transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .dashboard-sidebar.active {
+                left: 0;
+            }
+
+            #sidebar-overlay.active {
+                display: block;
+            }
+
+            .dashboard-header {
+                margin: 1rem;
+                padding: 0.75rem 1rem;
+            }
+
+            .mobile-menu-btn {
+                display: flex;
+            }
+
+            .header-status-box {
+                display: none;
+            }
+
+            .header-title-wrapper h1 {
+                font-size: 1.1rem;
+            }
+
+            .header-title-wrapper p {
+                display: none;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .dashboard-content {
+                padding: 0 1rem 1rem 1rem;
+            }
+
+            .user-profile div:first-child {
+                display: none;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: var(--space-lg);
+            margin-bottom: var(--space-2xl);
+        }
+
+        .glass-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-soft);
+            border-radius: var(--radius-lg);
+            padding: var(--space-xl);
+            transition: all var(--transition-base);
+            position: relative;
+            overflow: hidden;
+        }
+
+        [data-theme="dark"] .glass-card {
+            background: var(--bg-secondary);
+            border-color: var(--border-soft);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--text-muted);
+        }
+
+        /* Tab Content */
+        .tab-pane {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Tables */
+        .data-table-wrapper {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-soft);
+            border-radius: var(--radius-lg);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .data-table {
+            width: 100%;
+            min-width: 600px;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .data-table th {
+            padding: 1rem 1.5rem;
+            background: var(--bg-tertiary);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-soft);
+        }
+
+        .data-table td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-soft);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .data-table tr:hover td {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.625rem;
+            border-radius: var(--radius-pill);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+        }
+
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+        }
+
+        .badge-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .role-badge {
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-top: 4px;
+            display: inline-block;
+            font-weight: 600;
+        }
+
+        /* Profile Mini */
+        .profile-mini {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+        }
+
+        .avatar-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        /* Notifications */
+        .notification-toast {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 2000;
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-md);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-soft);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+            }
+
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        /* Theme Toggle Override */
+        .dashboard-header .theme-toggle {
+            padding: 0.5rem;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside class="dashboard-sidebar" id="main-sidebar">
+        <div class="sidebar-brand">
+            <span class="brand-logo" style="font-size: 1.75rem;">🎓</span>
+            <span class="brand-name" style="font-size: 1.25rem; font-weight: 700;">CampusIQ</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-link active" onclick="switchTab('overview', this); closeSidebarOnMobile()">
+                <i class="fas fa-chart-pie"></i> Overview
+            </div>
+            <div class="nav-link" onclick="switchTab('colleges', this); closeSidebarOnMobile()">
+                <i class="fas fa-university"></i> Colleges
+            </div>
+            <div class="nav-link" onclick="switchTab('users', this); closeSidebarOnMobile()">
+                <i class="fas fa-users-cog"></i> Users Hub
+            </div>
+            <div class="nav-link" onclick="switchTab('audit', this); closeSidebarOnMobile()">
+                <i class="fas fa-clipboard-list"></i> Audit Logs
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="nav-link" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Sign Out
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+        <header class="dashboard-header">
+            <div style="display: flex; align-items: center;">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="header-title-wrapper">
+                    <h1 id="tab-title">System Overview</h1>
+                    <p id="tab-subtitle" style="font-size: 0.75rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">
+                        Complete platform control and global intelligence.</p>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <div class="header-status-box">
+                    <div id="live-time"
+                        style="font-size: 0.9rem; font-weight: 700; font-family: 'SF Mono', monospace; color: var(--text-primary);">
+                    </div>
+                    <div id="live-date"
+                        style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+                    </div>
+                </div>
+
+                <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()"
+                    style="width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border-soft); background: var(--bg-primary); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-sun" id="theme-icon-light" style="font-size: 0.9rem;"></i>
+                    <i class="fas fa-moon" id="theme-icon-dark" style="font-size: 0.9rem;"></i>
+                </button>
+
+                <div class="user-profile"
+                    style="display: flex; align-items: center; gap: 0.75rem; padding: 0.4rem 0.75rem; background: var(--bg-primary); border-radius: 10px; border: 1px solid var(--border-soft);">
+                    <div style="text-align: right;">
+                        <div id="user-display-name"
+                            style="font-weight: 600; font-size: 0.8rem; color: var(--text-primary);">Super Admin</div>
+                        <div id="user-role-badge" style="font-size: 0.65rem; color: var(--text-muted);">Root System
+                            Access</div>
+                    </div>
+                    <div id="user-avatar-header"
+                        style="width: 36px; height: 36px; border-radius: 8px; background: var(--accent-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;">
+                        SA
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="dashboard-content">
+            <!-- Overview Tab -->
+            <div id="tab-overview" class="tab-pane active">
+                <div class="stats-grid">
+                    <div class="glass-card">
+                        <div class="section-label">PLATFORM SCOPE</div>
+                        <div class="stat-number" id="stat-colleges"
+                            style="font-size: 2.5rem; margin-top: 0.5rem; font-family: var(--font-display);">0</div>
+                        <div class="stat-label">REGISTERED COLLEGES</div>
+                    </div>
+                    <div class="glass-card">
+                        <div class="section-label">USER REACH</div>
+                        <div class="stat-number" id="stat-users"
+                            style="font-size: 2.5rem; margin-top: 0.5rem; font-family: var(--font-display);">0</div>
+                        <div class="stat-label">TOTAL ACTIVE USERS</div>
+                    </div>
+                    <div class="glass-card">
+                        <div class="section-label">ATTENTION</div>
+                        <div class="stat-number" id="stat-pending"
+                            style="font-size: 2.5rem; margin-top: 0.5rem; color: var(--accent-orange); font-family: var(--font-display);">
+                            0</div>
+                        <div class="stat-label">PENDING APPROVALS</div>
+                    </div>
+                </div>
+
+                <div class="content-grid" style="display: grid; grid-template-columns: 1fr; gap: var(--space-xl);">
+                    <div class="glass-panel">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-lg);">
+                            <h3 style="font-family: var(--font-display); font-size: 1.25rem;">Recent Registrations</h3>
+                            <button class="btn btn-pill btn-dark" style="font-size: 0.75rem;"
+                                onclick="switchTab('colleges', document.querySelector('.fa-university').parentElement)">VIEW
+                                ALL</button>
+                        </div>
+                        <div class="data-table-wrapper">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>College</th>
+                                        <th>Domain</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-colleges-body">
+                                    <tr>
+                                        <td colspan="4" style="text-align:center;">Loading...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Colleges Tab -->
+            <div id="tab-colleges" class="tab-pane">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-xl);">
+                    <h2 style="font-family: var(--font-display);">College Management</h2>
+                    <button class="btn btn-dark btn-pill" onclick="showModal('college-modal')">+ REGISTER NEW
+                        COLLEGE</button>
+                </div>
+                <div class="data-table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>College Name</th>
+                                <th>Email Domain</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="all-colleges-body">
+                            <!-- Dynamic -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Users Tab -->
+            <div id="tab-users" class="tab-pane">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-xl);">
+                    <h2 style="font-family: var(--font-display);">Global User Directory</h2>
+                    <div style="display: flex; gap: var(--space-md);">
+                        <input type="text" placeholder="Search users..." class="btn btn-pill"
+                            style="border: 1px solid var(--border-soft); background: var(--bg-secondary); padding: 0.5rem 1rem;">
+                    </div>
+                </div>
+                <div class="data-table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Email</th>
+                                <th>College</th>
+                                <th>Role</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="all-users-body">
+                            <!-- Dynamic -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+
+            <!-- Audit Tab -->
+            <div id="tab-audit" class="tab-pane">
+                <h2 style="font-family: var(--font-display); margin-bottom: var(--space-xl);">System Audit Trail</h2>
+                <div class="data-table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Admin</th>
+                                <th>Action</th>
+                                <th>Entity</th>
+                                <th>Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audit-logs-body">
+                            <!-- Dynamic -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <div id="college-modal" class="modal"
+        style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center;">
+        <div class="glass-card" style="width: 100%; max-width: 500px; background: var(--bg-secondary);">
+            <h3 style="font-family: var(--font-display);">Register New College</h3>
+            <div style="margin-top: 1.5rem;">
+                <label style="display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.5rem;">COLLEGE
+                    NAME</label>
+                <input type="text" id="new-college-name" class="btn btn-pill"
+                    style="width: 100%; border: 1px solid var(--border-soft); margin-bottom: 1rem; text-align: left; background: var(--bg-primary);">
+
+                <label style="display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.5rem;">EMAIL
+                    DOMAIN</label>
+                <input type="text" id="new-college-domain" class="btn btn-pill"
+                    style="width: 100%; border: 1px solid var(--border-soft); margin-bottom: 1rem; text-align: left; background: var(--bg-primary);"
+                    placeholder="e.g. mes.ac.in">
+
+                <label style="display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.5rem;">ADMIN EMAIL
+                    (College Admin)</label>
+                <input type="email" id="new-college-admin-email" class="btn btn-pill"
+                    style="width: 100%; border: 1px solid var(--border-soft); margin-bottom: 1.5rem; text-align: left; background: var(--bg-primary);"
+                    placeholder="admin@college.com">
+
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn btn-dark btn-pill btn-block" onclick="createCollege()">CREATE COLLEGE</button>
+                    <button class="btn btn-outline btn-pill btn-block"
+                        onclick="hideModal('college-modal')">CANCEL</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Management Modal -->
+    <div id="user-modal" class="modal"
+        style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center;">
+        <div class="glass-card" style="width: 100%; max-width: 400px; background: var(--bg-secondary);">
+            <h3 style="font-family: var(--font-display);">Manage User Role</h3>
+            <div style="margin-top: 1.5rem;">
+                <input type="hidden" id="manage-user-id">
+                <label style="display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.5rem;">SELECT NEW
+                    ROLE</label>
+                <select id="manage-user-role" class="btn btn-pill"
+                    style="width: 100%; border: 1px solid var(--border-soft); margin-bottom: 1rem; text-align: left; background: var(--bg-primary);">
+                    <option value="SUPER_ADMIN">Super Admin</option>
+                    <option value="COLLEGE_ADMIN">College Admin</option>
+                    <option value="FACULTY">Faculty</option>
+                    <option value="STAFF">Staff</option>
+                    <option value="STUDENT">Student</option>
+                </select>
+
+                <label style="display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.5rem;">ASSIGN
+                    COLLEGE
+                    (for non Super Admins)</label>
+                <select id="manage-user-college" class="btn btn-pill"
+                    style="width: 100%; border: 1px solid var(--border-soft); margin-bottom: 1.5rem; text-align: left; background: var(--bg-primary);">
+                    <option value="">None / Platform</option>
+                    <!-- Populated dynamically -->
+                </select>
+
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn btn-dark btn-pill btn-block" onclick="updateUserRole()">SAVE</button>
+                    <button class="btn btn-danger btn-pill btn-block" onclick="suspendUser()">SUSPEND</button>
+                </div>
+                <button class="btn btn-outline btn-pill btn-block" style="margin-top: 1rem;"
+                    onclick="hideModal('user-modal')">CANCEL</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        const API_BASE = 'http://localhost:5000/api/v1';
+
+        // ============================================
+        // Auth & Navigation
+        // ============================================
+        async function getAuthToken() {
+            return localStorage.getItem('campusiq_token') || localStorage.getItem('access_token');
+        }
+
+        async function fetchWithAuth(url, options = {}) {
+            const token = await getAuthToken();
+            if (!token) {
+                window.location.href = '/';
+                return null;
+            }
+
+            const response = await fetch(url, {
+                ...options,
+                headers: {
+                    ...options.headers,
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                window.location.href = '/';
+                return null;
+            }
+
+            return response;
+        }
+
+        // Live Clock
+        function updateClock() {
+            const now = new Date();
+            const timeEl = document.getElementById('live-time');
+            const dateEl = document.getElementById('live-date');
+            if (timeEl) timeEl.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            if (dateEl) dateEl.textContent = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        function toggleSidebar() {
+            document.getElementById('main-sidebar').classList.toggle('active');
+            document.getElementById('sidebar-overlay').classList.toggle('active');
+        }
+
+        function closeSidebarOnMobile() {
+            if (window.innerWidth <= 1024) {
+                document.getElementById('main-sidebar').classList.remove('active');
+                document.getElementById('sidebar-overlay').classList.remove('active');
+            }
+        }
+
+        function switchTab(tabId, el) {
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            el.classList.add('active');
+
+            const title = el.innerText.trim();
+            document.getElementById('tab-title').textContent = title;
+
+            const subtitles = {
+                'overview': 'Complete platform control and global intelligence.',
+                'colleges': 'Manage institutional partners and access domains.',
+                'users': 'Global user administration and role management.',
+                'audit': 'Comprehensive immutable record of all system actions.'
+            };
+            document.getElementById('tab-subtitle').textContent = subtitles[tabId] || 'System Management Console';
+
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+
+            if (tabId === 'colleges') loadAllColleges();
+            if (tabId === 'users') loadAllUsers();
+            if (tabId === 'audit') loadAuditLogs();
+        }
+
+        // ============================================
+        // Data Sync
+        // ============================================
+        async function loadUserInfo() {
+            const res = await fetchWithAuth(`${API_BASE}/auth/me`);
+            if (!res) return;
+            const result = await res.json();
+            if (result.success) {
+                const user = result.data;
+                const nameEl = document.getElementById('user-display-name');
+                const initialsEl = document.getElementById('user-avatar-header');
+
+                if (nameEl) nameEl.textContent = user.name || user.full_name || user.email;
+                if (initialsEl) initialsEl.textContent = (user.name || user.full_name || 'SA').substring(0, 2).toUpperCase();
+            }
+        }
+
+        async function loadDashboardStats() {
+            const res = await fetchWithAuth(`${API_BASE}/super-admin/dashboard`);
+            if (!res) return;
+            const result = await res.json();
+            if (result.success) {
+                const data = result.data;
+                document.getElementById('stat-colleges').textContent = data.stats?.total_colleges || 0;
+                document.getElementById('stat-users').textContent = data.stats?.total_users || 0;
+                document.getElementById('stat-pending').textContent = data.stats?.pending_approval || 0;
+            }
+        }
+
+        async function loadAllColleges() {
+            const res = await fetchWithAuth(`${API_BASE}/super-admin/colleges`);
+            if (!res) return;
+            const result = await res.json();
+            if (result.items) {
+                const body = result.items.map(c => `
+                    <tr>
+                        <td style="font-weight: 500; color: var(--text-primary);">${c.college_name}</td>
+                        <td>${c.email_domain || '-'}</td>
+                        <td><span class="badge ${getStatusBadgeClass(c.status)}">${c.status}</span></td>
+                        <td>
+                            <div style="display: flex; gap: 0.5rem;">
+                                ${c.status === 'PENDING' ? `<button class="btn btn-dark btn-pill btn-sm" onclick="approveCollege('${c.college_id}')">APPROVE</button>` : ''}
+                                ${c.status === 'SUSPENDED' ? `<button class="btn btn-success btn-pill btn-sm" onclick="approveCollege('${c.college_id}')">ACTIVATE</button>` :
+                        `<button class="btn btn-outline btn-pill btn-sm" onclick="suspendCollege('${c.college_id}')">SUSPEND</button>`}
+                                <button class="btn btn-dark btn-pill btn-sm" onclick="viewAsCollege('${c.college_id}')">VIEW</button>
+                                <button class="btn btn-danger btn-pill btn-sm" style="background:#ef4444!important; border:none;" onclick="removeCollege('${c.college_id}', '${c.college_name.replace(/'/g, "\\'")}')">REMOVE</button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+                document.getElementById('all-colleges-body').innerHTML = body;
+                document.getElementById('recent-colleges-body').innerHTML = body.substring(0, 500); // Sample for recent
+
+                // Populate user management dropdown
+                const collegeSelect = document.getElementById('manage-user-college');
+                if (collegeSelect) {
+                    collegeSelect.innerHTML = '<option value="">None / Platform</option>' +
+                        result.items.map(c => `<option value="${c.college_id}">${c.college_name}</option>`).join('');
+                }
+            }
+        }
+
+        async function loadAllUsers() {
+            const res = await fetchWithAuth(`${API_BASE}/super-admin/users?status=ACTIVE`);
+            if (!res) return;
+            const result = await res.json();
+            if (result.items) {
+                document.getElementById('all-users-body').innerHTML = result.items.map(u => `
+                    <tr>
+                        <td>
+                            <div style="font-weight: 500; color: var(--text-primary);">${u.full_name || 'No Name'}</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">${u.user_id.substring(0, 8)}</div>
+                        </td>
+                        <td>${u.email}</td>
+                        <td>${u.college_name || 'PLATFORM'}</td>
+                        <td><span class="badge" style="background: var(--bg-tertiary); color: var(--text-secondary);">${u.role_code}</span></td>
+                        <td><button class="btn btn-outline btn-pill btn-sm" onclick="openUserManagement('${u.user_id}', '${u.role_code}', '${u.college_id || ''}')">MANAGE</button></td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+
+        async function loadAuditLogs() {
+            const res = await fetchWithAuth(`${API_BASE}/super-admin/audit-logs`);
+            if (!res) return;
+            const result = await res.json();
+            if (result.items) {
+                document.getElementById('audit-logs-body').innerHTML = result.items.map(l => `
+                    <tr>
+                        <td style="font-weight:500;">ADMIN</td>
+                        <td>${l.action_type}</td>
+                        <td>${l.entity_type}:${l.entity_id.substring(0, 8)}</td>
+                        <td>${new Date(l.created_at).toLocaleString()}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function openUserManagement(userId, currentRole, collegeId) {
+            document.getElementById('manage-user-id').value = userId;
+            document.getElementById('manage-user-role').value = currentRole;
+            document.getElementById('manage-user-college').value = collegeId || '';
+            showModal('user-modal');
+        }
+
+        async function updateUserRole() {
+            const userId = document.getElementById('manage-user-id').value;
+            const newRole = document.getElementById('manage-user-role').value;
+            const collegeId = document.getElementById('manage-user-college').value;
+
+            const res = await fetchWithAuth(`${API_BASE}/super-admin/users/${userId}/role`, {
+                method: 'PUT',
+                body: JSON.stringify({ role: newRole, college_id: collegeId })
+            });
+
+            if (res && res.ok) {
+                notification('User updated successfully!', 'success');
+                hideModal('user-modal');
+                loadAllUsers();
+                loadDashboardStats();
+            } else {
+                const error = await res.json();
+                notification('Error: ' + (error.message || 'Failed to update user'), 'error');
+            }
+        }
+
+        async function suspendUser() {
+            const userId = document.getElementById('manage-user-id').value;
+            if (!confirm('Are you sure you want to suspend this user?')) return;
+
+            const res = await fetchWithAuth(`${API_BASE}/super-admin/users/${userId}/deactivate`, {
+                method: 'POST'
+            });
+
+            if (res && res.ok) {
+                notification('User suspended successfully!', 'success');
+                hideModal('user-modal');
+                loadAllUsers();
+                loadDashboardStats();
+            } else {
+                notification('Failed to suspend user', 'error');
+            }
+        }
+
+        // ============================================
+        // Actions & UI
+        // ============================================
+        async function createCollege() {
+            const name = document.getElementById('new-college-name').value;
+            const domain = document.getElementById('new-college-domain').value;
+            const adminEmail = document.getElementById('new-college-admin-email').value;
+            if (!name || !domain || !adminEmail) return notification('All fields required', 'error');
+
+            const res = await fetchWithAuth(`${API_BASE}/super-admin/colleges`, {
+                method: 'POST',
+                body: JSON.stringify({ college_name: name, email_domain: domain, admin_email: adminEmail })
+            });
+
+            if (res && res.ok) {
+                notification('College registered!', 'success');
+                hideModal('college-modal');
+                loadAllColleges();
+                loadDashboardStats();
+            }
+        }
+
+        async function approveCollege(id) {
+            const res = await fetchWithAuth(`${API_BASE}/super-admin/colleges/${id}/approve`, { method: 'POST' });
+            if (res && res.ok) {
+                notification('Status updated!', 'success');
+                loadAllColleges();
+                loadDashboardStats();
+            }
+        }
+
+        async function suspendCollege(id) {
+            const reason = prompt('Reason for suspension:', 'Policy violation');
+            if (!reason) return;
+
+            const res = await fetchWithAuth(`${API_BASE}/super-admin/colleges/${id}/suspend`, {
+                method: 'POST',
+                body: JSON.stringify({ reason: reason })
+            });
+
+            if (res && res.ok) {
+                notification('College suspended', 'info');
+                loadAllColleges();
+                loadDashboardStats();
+            }
+        }
+
+        async function removeCollege(id, name) {
+            if (!confirm(`Are you sure you want to PERMANENTLY remove "${name}"? This will also remove all associated users.`)) return;
+
+            const res = await fetchWithAuth(`${API_BASE}/super-admin/colleges/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (res && res.ok) {
+                notification('College removed from platform', 'success');
+                loadAllColleges();
+                loadDashboardStats();
+            } else {
+                const err = await res.json();
+                notification('Error: ' + (err.message || 'Failed to remove college'), 'error');
+            }
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const target = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', target);
+            localStorage.setItem('campusiq_theme', target);
+        }
+
+        function getStatusBadgeClass(status) {
+            if (status === 'APPROVED' || status === 'ACTIVE') return 'badge-success';
+            if (status === 'PENDING') return 'badge-warning';
+            return 'badge-danger';
+        }
+
+        function showModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function hideModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function notification(msg, type) {
+            const n = document.createElement('div');
+            n.className = 'notification-toast';
+            n.innerHTML = `<i class="fas fa-${type === 'success' ? 'check' : 'info'}-circle"></i> ${msg}`;
+            document.body.appendChild(n);
+            setTimeout(() => n.remove(), 3000);
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/';
+        }
+
+        function viewAsCollege(id) {
+            localStorage.setItem('campusiq_view_as_college', id);
+            window.location.href = 'college-admin-dashboard.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const theme = localStorage.getItem('campusiq_theme') || 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+            loadUserInfo();
+            loadDashboardStats();
+            loadAllColleges();
+        });
+    </script>
+</body>
+
+</html>

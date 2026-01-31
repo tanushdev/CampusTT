@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.env
+.venv
+node_modules/
+.DS_Store
+instance/
+.pytest_cache/
+passwords.txt
+secrets.json
+campusiq.db
+campusiq_dev.db

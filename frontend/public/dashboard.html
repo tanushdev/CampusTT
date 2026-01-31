@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | CampusIQ</title>
+
+    <!-- Premium Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        :root {
+            --sidebar-width: 280px;
+        }
+
+        body {
+            display: flex;
+            min-height: 100vh;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            transition: all var(--transition-slow);
+        }
+
+        /* Sidebar Styles - Using Global Tokens */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-soft);
+            display: flex;
+            flex-direction: column;
+            padding: var(--space-xl);
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+            transition: background var(--transition-slow);
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-3xl);
+            padding: 0 var(--space-sm);
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.9rem 1.2rem;
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all var(--transition-fast);
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            box-shadow: var(--shadow-md);
+        }
+
+        .sidebar-footer {
+            padding-top: var(--space-xl);
+            border-top: 1px solid var(--border-soft);
+        }
+
+        /* Main Content Styles */
+        .main-wrapper {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+        }
+
+        /* Updated Responsiveness */
+        .main-content {
+            padding: 1.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        @media (min-width: 1400px) {
+            .main-content {
+                padding: 2rem 4rem;
+            }
+        }
+
+        .dashboard-header,
+        .card-header {
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .view-section {
+            display: none;
+            flex: 1;
+            overflow: hidden;
+            flex-direction: column;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .view-section.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Cleaned Up Card & View Components */
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-soft);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-soft);
+            background: var(--bg-secondary);
+        }
+
+        .card-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .qna-input-bar {
+            padding: var(--space-xl);
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-soft);
+            display: flex;
+            gap: 1rem;
+        }
+
+        .qna-input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        .qna-input-wrapper input {
+            width: 100%;
+            padding: 1.2rem 1.5rem;
+            padding-right: 4rem;
+            border-radius: var(--radius-pill);
+            border: 2px solid var(--border-soft);
+            background: var(--bg-primary);
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .qna-input-wrapper input:focus {
+            border-color: var(--text-primary);
+            box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05);
+        }
+
+        /* QnA Autocomplete */
+        .qna-suggestions {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-soft);
+            border-radius: 12px;
+            max-height: 240px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.12);
+            display: none;
+            backdrop-filter: blur(10px);
+        }
+
+        .suggestion-item {
+            padding: 0.75rem 1rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-bottom: 1px solid var(--border-soft);
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-item:hover {
+            background: var(--bg-tertiary);
+            color: var(--accent-blue);
+        }
+
+        .suggestion-icon {
+            font-size: 0.8rem;
+            width: 20px;
+            text-align: center;
+            opacity: 0.7;
+        }
+
+        .suggestion-category {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--text-muted);
+            margin-left: auto;
+            font-weight: 700;
+        }
+
+        /* Attendance Styles */
+        .attendance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .attendance-card {
+            background: var(--bg-secondary);
+            padding: var(--space-xl);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-soft);
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--text-primary);
+            border-radius: 4px;
+        }
+
+        /* General Card UI */
+        .card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border-soft);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-xl);
+        }
+
+        .card-title {
+            font-family: var(--font-heading);
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .timetable-mini {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .timetable-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.2rem;
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .timetable-item:hover {
+            border-color: var(--border-color);
+            transform: scale(1.01);
+            background: var(--bg-secondary);
+        }
+
+        @media (max-width: 1100px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main-wrapper {
+                margin-left: 0;
+            }
+
+            .dashboard-header,
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start !important;
+            }
+
+            .header-actions,
+            .card-header>div:last-child {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main-wrapper {
+                margin-left: 0;
+            }
+
+            .main-content {
+                padding: var(--space-xl);
+            }
+        }
+
+        /* Prevent table data wrapping when space exists */
+        #schedule-table-body td {
+            white-space: nowrap;
+        }
+
+        #schedule-table-body td:nth-child(3),
+        #schedule-table-body td:nth-child(4) {
+            white-space: normal;
+            /* Allow subject and instructor to wrap if very long */
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <span class="brand-logo" style="font-size: 1.75rem;">
+                <div class="skeleton" style="width: 32px; height: 32px; border-radius: 8px;"></div>
+            </span>
+            <span class="brand-name" style="font-size: 1.25rem; font-weight: 700;">
+                <div class="skeleton" style="width: 120px; height: 20px; border-radius: 4px;"></div>
+            </span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-item active" onclick="showView('schedules')">
+                <i class="fas fa-th-large"></i>
+                <span>Schedules</span>
+            </div>
+            <div class="nav-item" onclick="showView('qna')">
+                <i class="fas fa-magic"></i>
+                <span>Smart QnA</span>
+            </div>
+            <div class="nav-item" onclick="showView('rooms')">
+                <i class="fas fa-building"></i>
+                <span>Rooms</span>
+            </div>
+            <div class="nav-item" onclick="showView('faculty')">
+                <i class="fas fa-user-tie"></i>
+                <span>Faculty</span>
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="index.html" class="nav-item" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <div class="main-wrapper">
+        <main class="main-content">
+            <header class="dashboard-header"
+                style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: var(--bg-secondary); border-radius: 12px; margin-bottom: 1rem; border: 1px solid var(--border-soft);">
+                <div class="welcome-text">
+                    <h1 id="view-title"
+                        style="font-size: 1.4rem; font-weight: 800; margin: 0; color: var(--text-primary);">
+                        Campus Intelligence</h1>
+                    <p id="view-subtitle" style="font-size: 0.75rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">
+                        Real-time scheduling and campus insights</p>
+                </div>
+
+                <div class="header-actions" style="display: flex; align-items: center; gap: 1rem;">
+                    <div
+                        style="text-align: right; padding: 0.5rem 1rem; background: var(--bg-tertiary); border-radius: 8px; border: 1px solid var(--border-soft);">
+                        <div id="live-time"
+                            style="font-size: 0.9rem; font-weight: 700; font-family: 'SF Mono', monospace; color: var(--text-primary);">
+                        </div>
+                        <div id="live-date"
+                            style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+                        </div>
+                    </div>
+                    <button class="theme-toggle" onclick="toggleTheme()"
+                        style="width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border-soft); background: var(--bg-tertiary); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-sun" id="theme-icon-light" style="font-size: 0.9rem;"></i>
+                        <i class="fas fa-moon" id="theme-icon-dark" style="font-size: 0.9rem;"></i>
+                    </button>
+                    <div class="user-profile"
+                        style="display: flex; align-items: center; gap: 0.75rem; padding: 0.4rem 0.75rem; background: var(--bg-tertiary); border-radius: 10px; border: 1px solid var(--border-soft);">
+                        <div style="text-align: right;">
+                            <div id="user-name-header"
+                                style="font-weight: 600; font-size: 0.8rem; color: var(--text-primary);">Loading...
+                            </div>
+                            <div id="user-role-header" style="font-size: 0.65rem; color: var(--text-muted);">—</div>
+                        </div>
+                        <div id="user-avatar-header"
+                            style="width: 36px; height: 36px; border-radius: 8px; background: var(--bg-secondary); border:1px solid var(--border-soft); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;">
+                            <i class="fas fa-user" style="color: var(--text-muted); font-size: 0.9rem;"></i>
+                            <span
+                                style="position: absolute; bottom: 2px; right: 2px; width: 8px; height: 8px; background: #22c55e; border-radius: 50%; border: 2px solid var(--bg-tertiary);"></span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- VIEW: Timetable -->
+            <section id="view-schedules" class="view-section active">
+                <div class="card" style="height: 100%; display: flex; flex-direction: column;">
+                    <div class="card-header"
+                        style="flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-soft);">
+                        <div>
+                            <h2 class="card-title">Today's Schedule</h2>
+                        </div>
+                        <div style="display: flex; gap: 0.75rem; align-items: center;">
+                            <div id="my-schedule-toggle"
+                                style="display: none; align-items: center; gap: 0.5rem; background: var(--bg-secondary); padding: 0.35rem 0.75rem; border-radius: 6px; border: 1px solid var(--border-soft); cursor: pointer;"
+                                onclick="togglePersonalSchedule()">
+                                <i class="fas fa-user-check" style="color: var(--accent-blue); font-size: 0.8rem;"></i>
+                                <span style="font-size: 0.7rem; font-weight: 600; color: var(--text-primary);">MY
+                                    VIEW</span>
+                            </div>
+                            <div id="full-week-toggle"
+                                style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-secondary); padding: 0.35rem 0.75rem; border-radius: 6px; border: 1px solid var(--border-soft); cursor: pointer;"
+                                onclick="toggleFullWeek()">
+                                <i class="fas fa-calendar-alt" style="color: var(--text-muted); font-size: 0.8rem;"></i>
+                                <span
+                                    style="font-size: 0.7rem; font-weight: 600; color: var(--text-primary);">TODAY</span>
+                            </div>
+                            <input type="text" id="schedule-search" placeholder="Search..." oninput="filterSchedules()"
+                                style="padding: 0.4rem 0.75rem; font-size: 0.75rem; border: 1px solid var(--border-soft); border-radius: 6px; width: 150px; background: var(--bg-primary); color: var(--text-primary); outline: none;">
+                            <span id="current-day-badge"
+                                style="background:var(--bg-tertiary); padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600;">Loading...</span>
+                        </div>
+                    </div>
+                    <div style="flex: 1; overflow-y: auto; margin-top: 0.5rem;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.75rem;">
+                            <thead style="position: sticky; top: 0; background: var(--bg-tertiary); z-index: 5;">
+                                <tr>
+                                    <th style="padding: 0.5rem; text-align: left; font-weight: 700; width: 70px;">DAY
+                                    </th>
+                                    <th style="padding: 0.5rem; text-align: left; font-weight: 700; width: 70px;">TIME
+                                    </th>
+                                    <th style="padding: 0.5rem; text-align: left; font-weight: 700;">SUBJECT</th>
+                                    <th style="padding: 0.5rem; text-align: left; font-weight: 700;">INSTRUCTOR</th>
+                                    <th style="padding: 0.5rem; text-align: left; font-weight: 700; width: 80px;">GROUP
+                                    </th>
+                                    <th style="padding: 0.5rem; text-align: left; font-weight: 700; width: 70px;">ROOM
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="schedule-table-body">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; padding: 2rem;">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div
+                        style="flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding-top: 0.5rem; border-top: 1px solid var(--border-soft); margin-top: 0.5rem;">
+                        <span id="schedule-page-info" style="font-size: 0.7rem; color: var(--text-muted);"></span>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button onclick="changeSchedulePage(-1)" id="prev-schedule"
+                                style="padding: 0.4rem 0.75rem; font-size: 0.7rem; border: 1px solid var(--border-soft); background: var(--bg-tertiary); color: var(--text-primary); border-radius: 6px; cursor: pointer; transition: all 0.2s;">←
+                                Prev</button>
+                            <button onclick="changeSchedulePage(1)" id="next-schedule"
+                                style="padding: 0.4rem 0.75rem; font-size: 0.7rem; border: 1px solid var(--border-soft); background: var(--bg-tertiary); color: var(--text-primary); border-radius: 6px; cursor: pointer; transition: all 0.2s;">Next
+                                →</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- VIEW: Smart QnA -->
+            <!-- VIEW: Smart QnA -->
+            <section id="view-qna" class="view-section">
+                <div class="card"
+                    style="height: 100%; display: flex; flex-direction: column; background: var(--bg-primary);">
+                    <!-- Header -->
+                    <div class="card-header"
+                        style="flex-shrink: 0; padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border-soft); background: var(--bg-secondary);">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div
+                                style="width: 32px; height: 32px; background: var(--text-primary); color: var(--bg-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                            </div>
+                            <div>
+                                <h2 class="card-title" style="margin: 0; font-size: 0.95rem; font-weight: 700;">Faculty
+                                    Intelligence</h2>
+                                <div style="display: flex; align-items: center; gap: 0.4rem; margin-top: 1px;">
+                                    <span
+                                        style="width: 6px; height: 6px; background: var(--accent-blue); border-radius: 50%; opacity: 0.8;"></span>
+                                    <span
+                                        style="font-size: 0.65rem; color: var(--text-muted); font-weight: 500;">Academic
+                                        Knowledge Base v2</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Area -->
+                    <div id="full-chat-area"
+                        style="flex: 1; overflow-y: auto; padding: 2rem; display: flex; flex-direction: column; gap: 1rem; background: var(--bg-primary);">
+                        <!-- Minimalist Welcome -->
+                        <div id="qna-welcome-screen"
+                            style="margin: auto; text-align: center; max-width: 450px; animation: fadeIn 0.5s ease;">
+                            <h3
+                                style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary);">
+                                How can I help you today?</h3>
+                            <p
+                                style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5;">
+                                Ask about schedules, room availability, or your personal teaching records.</p>
+                        </div>
+                    </div>
+
+                    <!-- Input Bar -->
+                    <div
+                        style="flex-shrink: 0; padding: 1rem; background: var(--bg-secondary); border-top: 1px solid var(--border-soft);">
+                        <div style="max-width: 800px; margin: 0 auto; display: flex; gap: 0.75rem; position: relative;">
+                            <div style="flex: 1; position: relative;">
+                                <input type="text" id="full-qna-input" placeholder="Ask anything..."
+                                    onkeypress="handleFullQnA(event)" oninput="handleQnASuggestions()"
+                                    autocomplete="off"
+                                    style="width: 100%; padding: 0.75rem 1.25rem; border: 1.5px solid var(--border-soft); border-radius: 10px; font-size: 0.85rem; background: var(--bg-primary); color: var(--text-primary); outline: none; transition: all 0.2s; font-weight: 500;">
+                                <div id="qna-suggestions" class="qna-suggestions"></div>
+                            </div>
+                            <button onclick="sendFullQnA()"
+                                style="width: 44px; height: 44px; border-radius: 10px; background: var(--text-primary); color: var(--bg-primary); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.1s;">
+                                <i class="fas fa-paper-plane" style="font-size: 0.9rem;"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: Rooms -->
+            <section id="view-rooms" class="view-section">
+                <div class="card" style="height: 100%; display: flex; flex-direction: column;">
+                    <div class="card-header"
+                        style="flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-soft);">
+                        <div>
+                            <h2 class="card-title">Rooms</h2>
+                        </div>
+                        <div style="display: flex; gap: 0.75rem; align-items: center;">
+                            <input type="text" id="rooms-search" placeholder="Search..." oninput="filterRooms()"
+                                style="padding: 0.4rem 0.75rem; font-size: 0.75rem; border: 1px solid var(--border-soft); border-radius: 6px; width: 150px; background: var(--bg-primary); color: var(--text-primary); outline: none;">
+                        </div>
+                    </div>
+                    <div style="flex: 1; overflow-y: auto; margin-top: 0.5rem;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.75rem;">
+                            <thead style="position: sticky; top: 0; background: var(--bg-tertiary); z-index: 5;">
+                                <tr>
+                                    <th style="padding: 0.5rem; text-align: left; font-weight: 700;">ROOM</th>
+                                    <th style="padding: 0.5rem; text-align: left; font-weight: 700;">STATUS</th>
+                                    <th style="padding: 0.5rem; text-align: left; font-weight: 700;">CURRENT CLASS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rooms-table-body">
+                                <tr>
+                                    <td colspan="3" style="text-align: center; padding: 2rem;">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div
+                        style="flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding-top: 0.5rem; border-top: 1px solid var(--border-soft); margin-top: 0.5rem;">
+                        <span id="rooms-page-info" style="font-size: 0.7rem; color: var(--text-muted);"></span>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button onclick="changeRoomsPage(-1)" id="prev-rooms"
+                                style="padding: 0.4rem 0.75rem; font-size: 0.7rem; border: 1px solid var(--border-soft); background: var(--bg-tertiary); color: var(--text-primary); border-radius: 6px; cursor: pointer; transition: all 0.2s;">←
+                                Prev</button>
+                            <button onclick="changeRoomsPage(1)" id="next-rooms"
+                                style="padding: 0.4rem 0.75rem; font-size: 0.7rem; border: 1px solid var(--border-soft); background: var(--bg-tertiary); color: var(--text-primary); border-radius: 6px; cursor: pointer; transition: all 0.2s;">Next
+                                →</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: Faculty -->
+            <section id="view-faculty" class="view-section">
+                <div class="card" style="height: 100%; display: flex; flex-direction: column;">
+                    <div class="card-header"
+                        style="flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-soft);">
+                        <div>
+                            <h2 class="card-title">Faculty</h2>
+                        </div>
+                        <div style="display: flex; gap: 0.75rem; align-items: center;">
+                            <input type="text" id="faculty-search" placeholder="Search..." oninput="filterFaculty()"
+                                style="padding: 0.4rem 0.75rem; font-size: 0.75rem; border: 1px solid var(--border-soft); border-radius: 6px; width: 150px; background: var(--bg-primary); color: var(--text-primary); outline: none;">
+                        </div>
+                    </div>
+                    <div style="flex: 1; overflow-y: auto; margin-top: 0.5rem;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.75rem;">
+                            <thead style="position: sticky; top: 0; background: var(--bg-tertiary); z-index: 5;">
+                                <tr>
+                                    <th style="padding: 0.5rem; text-align: left; font-weight: 700;">INSTRUCTOR</th>
+                                    <th style="padding: 0.5rem; text-align: left; font-weight: 700;">DESIGNATION</th>
+                                    <th style="padding: 0.5rem; text-align: left; font-weight: 700;">STATUS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="faculty-table-body">
+                                <tr>
+                                    <td colspan="3" style="text-align: center; padding: 2rem;">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div
+                        style="flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding-top: 0.5rem; border-top: 1px solid var(--border-soft); margin-top: 0.5rem;">
+                        <span id="faculty-page-info" style="font-size: 0.7rem; color: var(--text-muted);"></span>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button onclick="changeFacultyPage(-1)" id="prev-faculty"
+                                style="padding: 0.4rem 0.75rem; font-size: 0.7rem; border: 1px solid var(--border-soft); background: var(--bg-tertiary); color: var(--text-primary); border-radius: 6px; cursor: pointer; transition: all 0.2s;">←
+                                Prev</button>
+                            <button onclick="changeFacultyPage(1)" id="next-faculty"
+                                style="padding: 0.4rem 0.75rem; font-size: 0.7rem; border: 1px solid var(--border-soft); background: var(--bg-tertiary); color: var(--text-primary); border-radius: 6px; cursor: pointer; transition: all 0.2s;">Next
+                                →</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        const API_BASE = 'http://localhost:5000/api/v1';
+
+        async function fetchWithAuth(url, options = {}) {
+            const token = localStorage.getItem('campusiq_token') || localStorage.getItem('access_token');
+            if (!token) {
+                window.location.href = '/';
+                return null;
+            }
+            const headers = { 'Content-Type': 'application/json', ...options.headers, 'Authorization': `Bearer ${token}` };
+            const res = await fetch(url, { ...options, headers });
+
+            if (res.status === 401) {
+                localStorage.removeItem('campusiq_token');
+                localStorage.removeItem('access_token');
+                window.location.href = '/';
+                return null;
+            }
+
+            return res;
+        }
+
+        // Live Clock
+        function updateClock() {
+            const now = new Date();
+            const timeEl = document.getElementById('live-time');
+            const dateEl = document.getElementById('live-date');
+            if (timeEl) timeEl.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            if (dateEl) dateEl.textContent = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        let currentUserFullName = '';
+        let currentUserRole = '';
+        let isPersonalView = false; // Changed default to false
+        let isFullWeekView = false;
+
+        async function loadProfile() {
+            try {
+                const res = await fetchWithAuth(`${API_BASE}/staff/profile`);
+                if (res && res.ok) {
+                    const data = await res.json();
+                    const collegeName = data.college ? data.college.name : 'Independent';
+
+                    currentUserFullName = data.full_name || '';
+                    currentUserRole = data.role ? data.role.code : '';
+
+                    // Show personal toggle only for Faculty
+                    if (currentUserRole === 'FACULTY') {
+                        document.getElementById('my-schedule-toggle').style.display = 'flex';
+                    }
+
+                    // Update header user info
+                    document.getElementById('user-name-header').textContent = data.full_name || 'Faculty Member';
+                    document.getElementById('user-role-header').textContent = `${data.role ? data.role.name : 'Staff'} • ${collegeName}`;
+
+                    // Update avatar
+                    const avatarUrl = data.avatar_url || `https://ui-avatars.com/api/?name=${data.full_name || 'User'}&background=6366f1&color=fff`;
+                    document.getElementById('user-avatar-header').innerHTML = `
+                        <img src="${avatarUrl}" style="width: 100%; height: 100%; object-fit: cover;">
+                        <span style="position: absolute; bottom: 2px; right: 2px; width: 8px; height: 8px; background: #22c55e; border-radius: 50%; border: 2px solid var(--bg-primary);"></span>
+                    `;
+
+                    // Also update the branding
+                    if (data.college) {
+                        const brandName = document.querySelector('.brand-name');
+                        if (brandName) brandName.textContent = data.college.name;
+
+                        if (data.college.logo_url) {
+                            const brandLogo = document.querySelector('.brand-logo');
+                            if (brandLogo) brandLogo.innerHTML = `<img src="${data.college.logo_url}" style="height: 24px; width: 24px; object-fit: contain;">`;
+                        }
+                    }
+                    return data;
+                } else {
+                    console.error('Failed to load profile', res.status);
+                    document.querySelector('.user-profile').innerHTML = '<span style="font-size: 0.8rem; color: var(--text-muted);">Session Expired</span>';
+                }
+            } catch (err) {
+                console.error('Profile load error:', err);
+            }
+        }
+
+        async function loadDashboard() {
+            try {
+                const res = await fetchWithAuth(`${API_BASE}/staff/dashboard`);
+                if (res && res.ok) {
+                    const result = await res.json();
+                    const college = result.college;
+
+                    if (college && college.college_name) {
+                        document.querySelector('.brand-name').innerHTML = college.college_name;
+                        document.getElementById('view-title').innerText = `${college.college_name} Intelligence`;
+                        const qnaGreeting = document.getElementById('qna-greeting');
+                        if (qnaGreeting) qnaGreeting.innerText = `${college.college_name} Knowledge Base`;
+                        if (college.college_logo_url) {
+                            document.querySelector('.brand-logo').innerHTML = `<img src="${college.college_logo_url}" style="height: 32px; width: 32px; object-fit: contain;">`;
+                        } else {
+                            document.querySelector('.brand-logo').innerHTML = '🎓';
+                        }
+                    }
+
+                    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                    const todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+                    const dayBadge = document.getElementById('current-day-badge');
+                    if (dayBadge) dayBadge.innerText = days[todayIdx];
+
+                    originalScheduleData = result.schedules || [];
+                    applyScheduleFilters();
+                }
+                loadStatusSummaries();
+
+            } catch (err) {
+                console.error('Dashboard load error:', err);
+            }
+        }
+
+        // Global Data State
+        let originalScheduleData = [];
+        let originalFacultyData = [];
+        let originalRoomData = [];
+
+        // Filtered State
+        let scheduleData = [];
+        let facultyData = [];
+        let roomData = [];
+
+        // Pagination State
+        let currentSchedulePage = 1;
+        let currentFacultyPage = 1;
+        let currentRoomsPage = 1;
+
+        const schedulesPerPage = 15;
+        const facultyPerPage = 10;
+        const roomsPerPage = 16;
+
+        function renderSchedules() {
+            const tbody = document.getElementById('schedule-table-body');
+            if (!tbody) return;
+
+            if (!scheduleData || scheduleData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--text-muted);">No schedules found for this view.</td></tr>';
+                document.getElementById('schedule-page-info').innerText = '';
+                return;
+            }
+
+            const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+            // Sort by Day Index, then by Time
+            const sorted = [...scheduleData].sort((a, b) => {
+                const dayDiff = (a.day_of_week || 0) - (b.day_of_week || 0);
+                if (dayDiff !== 0) return dayDiff;
+
+                const [h1, m1] = a.start_time.split(':').map(Number);
+                const [h2, m2] = b.start_time.split(':').map(Number);
+                return (h1 * 60 + m1) - (h2 * 60 + m2);
+            });
+
+            const start = (currentSchedulePage - 1) * schedulesPerPage;
+            const paginated = sorted.slice(start, start + schedulesPerPage);
+
+            tbody.innerHTML = paginated.map(s => {
+                const dayName = dayNames[s.day_of_week] || '???';
+                return `
+                <tr style="border-bottom: 1px solid var(--border-soft);">
+                    <td style="padding: 0.4rem 0.5rem; font-weight: 700; color: var(--accent-blue);">${dayName}</td>
+                    <td style="padding: 0.4rem 0.5rem; font-weight: 600;">${s.start_time}</td>
+                    <td style="padding: 0.4rem 0.5rem;">${s.subject_name}</td>
+                    <td style="padding: 0.4rem 0.5rem; color: var(--text-muted);">${s.instructor_name}</td>
+                    <td style="padding: 0.4rem 0.5rem;"><span style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px; font-size: 0.7rem;">${s.class_code}</span></td>
+                    <td style="padding: 0.4rem 0.5rem; font-weight: 700;">${s.room_code || 'TBD'}</td>
+                </tr>
+            `}).join('');
+
+            const totalPages = Math.ceil(sorted.length / schedulesPerPage);
+            document.getElementById('schedule-page-info').innerText = `Showing ${start + 1}-${Math.min(start + schedulesPerPage, sorted.length)} of ${sorted.length}`;
+            document.getElementById('prev-schedule').disabled = currentSchedulePage === 1;
+            document.getElementById('next-schedule').disabled = currentSchedulePage >= totalPages;
+        }
+
+        function changeSchedulePage(dir) {
+            currentSchedulePage += dir;
+            renderSchedules();
+        }
+
+        // ==================== SMART QNA ====================
+        function handleFullQnA(event) {
+            if (event.key === 'Enter') sendFullQnA();
+        }
+
+        async function sendFullQnA() {
+            const input = document.getElementById('full-qna-input');
+            const query = input.value.trim();
+            if (!query) return;
+
+            const chatArea = document.getElementById('full-chat-area');
+
+            // ➕ Add user message with HIGH VISIBILITY
+            chatArea.innerHTML += `
+                <div class="message user" style="display:flex; justify-content:flex-end; margin-bottom:1.5rem; animation: slideIn 0.3s ease-out;">
+                    <div style="background:var(--accent-blue); color:#ffffff; padding:0.85rem 1.25rem; border-radius:18px 18px 2px 18px; max-width:80%; box-shadow:var(--shadow-md);">
+                        <p style="margin:0; font-size:0.9rem; font-weight:500; line-height:1.4;">${query}</p>
+                    </div>
+                </div>
+            `;
+            input.value = '';
+            chatArea.scrollTop = chatArea.scrollHeight;
+
+            // ⏳ Add typing indicator
+            const typingId = 'typing-' + Date.now();
+            chatArea.innerHTML += `
+                <div class="message bot" id="${typingId}" style="display:flex; gap:1rem; margin-bottom:1.5rem;">
+                    <div style="background:var(--bg-secondary); padding:0.85rem 1.25rem; border-radius:18px 18px 18px 2px; max-width:80%; border:1px solid var(--border-soft);">
+                        <p style="margin:0; color:var(--text-muted); font-size:0.85rem;"><i class="fas fa-spinner fa-spin"></i> Assistant is checking records...</p>
+                    </div>
+                </div>
+            `;
+            chatArea.scrollTop = chatArea.scrollHeight;
+
+            try {
+                const res = await fetchWithAuth(`${API_BASE}/qna/ask`, {
+                    method: 'POST',
+                    body: JSON.stringify({ query: query })
+                });
+
+                const typing = document.getElementById(typingId);
+                if (typing) typing.remove();
+
+                if (res && res.ok) {
+                    const result = await res.json();
+                    const data = result.data || result;
+
+                    // 🤖 Bot Response Bubble
+                    chatArea.innerHTML += `
+                        <div class="message bot" style="display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1.5rem; animation: fadeIn 0.4s ease-in;">
+                            <div style="background:var(--bg-secondary); padding:1rem 1.25rem; border-radius:18px 18px 18px 2px; max-width:90%; border:1px solid var(--border-soft); box-shadow:var(--shadow-sm);">
+                                <div style="margin:0; line-height:1.6; font-size:0.9rem; color:var(--text-primary); white-space: pre-wrap;">${data.response || 'I don’t have enough verified information to answer this.'}</div>
+                                ${data.processing_time_ms ? `<p style="margin:0.75rem 0 0 0; font-size:0.65rem; color:var(--text-muted); opacity:0.8; text-align:right;">✓ Verified in ${data.processing_time_ms}ms</p>` : ''}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    const errData = await res.json().catch(() => ({}));
+                    chatArea.innerHTML += `
+                        <div class="message bot" style="display:flex; gap:1rem; margin-bottom:1.5rem;">
+                            <div style="background:var(--bg-secondary); padding:0.85rem 1.25rem; border-radius:18px; border:1.5px solid #ef4444; max-width:85%;">
+                                <p style="margin:0; color:#ef4444; font-size:0.85rem; font-weight:600;">System Error: ${errData.message || 'I don’t have enough verified information to answer this.'}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                console.error('QnA Error:', err);
+                const typing = document.getElementById(typingId);
+                if (typing) typing.remove();
+                chatArea.innerHTML += `
+                    <div class="message bot" style="display:flex; gap:1rem; margin-bottom:1.5rem;">
+                        <div style="background:var(--bg-secondary); padding:0.85rem 1.25rem; border-radius:18px; border:1.5px solid #ef4444;">
+                            <p style="margin:0; color:#ef4444; font-size:0.85rem; font-weight:600;">Connection lost. Re-check network.</p>
+                        </div>
+                    </div>
+                `;
+            }
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        async function loadStatusSummaries() {
+            try {
+                const res = await fetchWithAuth(`${API_BASE}/staff/current-status`);
+                if (res && res.ok) {
+                    const data = await res.json();
+
+                    originalFacultyData = data.faculty || [];
+                    originalRoomData = data.rooms || [];
+
+                    facultyData = [...originalFacultyData];
+                    roomData = [...originalRoomData];
+
+                    // Update Briefs (Static top results)
+                    const roomBrief = document.getElementById('room-status-brief');
+                    if (roomBrief) {
+                        const vacantRooms = roomData.filter(r => r.status === 'FREE').slice(0, 5);
+                        if (vacantRooms.length > 0) {
+                            roomBrief.innerHTML = vacantRooms.map(r => `
+                                <div style="background: rgba(255,255,255,0.05); padding: 0.75rem; border-radius: 8px; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
+                                    <div style="font-weight: 600; font-size: 0.9rem;">${r.code}</div>
+                                    <div style="font-size: 0.6rem; color: #4ade80;">VACANT</div>
+                                </div>
+                            `).join('');
+                        } else {
+                            roomBrief.innerHTML = '<div style="grid-column: 1/-1; font-size: 0.75rem; opacity: 0.6;">All rooms occupied.</div>';
+                        }
+                    }
+
+                    // Update Faculty Brief
+                    const facultyBrief = document.getElementById('faculty-status-brief');
+                    if (facultyBrief) {
+                        const freeFaculty = facultyData.filter(f => f.status === 'FREE').slice(0, 3);
+                        if (freeFaculty.length > 0) {
+                            facultyBrief.innerHTML = freeFaculty.map(f => `
+                                <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-primary); padding: 0.75rem; border-radius: 10px; border: 1px solid var(--border-soft);">
+                                    <div style="font-size: 0.85rem; font-weight: 500;">${f.name}</div>
+                                    <span style="width: 8px; height: 8px; background: #22c55e; border-radius: 50%;"></span>
+                                </div>
+                            `).join('');
+                        } else {
+                            facultyBrief.innerHTML = '<div style="font-size: 0.75rem; opacity: 0.6;">No free faculty found.</div>';
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Status summary error:', err);
+            }
+        }
+
+        async function loadFaculty() {
+            if (originalFacultyData.length === 0) await loadStatusSummaries();
+
+            const start = (currentFacultyPage - 1) * facultyPerPage;
+            const end = start + facultyPerPage;
+            const paginated = facultyData.slice(start, end);
+
+            const tableBody = document.getElementById('faculty-table-body');
+            if (!paginated || paginated.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:2rem; color:var(--text-muted);">No faculty records found.</td></tr>';
+                document.getElementById('faculty-page-info').innerText = '';
+                return;
+            }
+
+            tableBody.innerHTML = paginated.map(f => {
+                const statusColor = f.status === 'FREE' ? '#22c55e' : '#f59e0b';
+                const statusText = f.status === 'FREE' ? 'Free' : `Busy (${f.current_class || 'Class'})`;
+                return `
+                    <tr style="border-bottom:1px solid var(--border-soft);">
+                        <td style="padding:0.4rem 0.5rem; font-weight:500;">${f.name}</td>
+                        <td style="padding:0.4rem 0.5rem; color:var(--text-muted);">Instructor</td>
+                        <td style="padding:0.4rem 0.5rem;"><span style="color:${statusColor}; font-weight:600; font-size:0.7rem;">● ${statusText}</span></td>
+                    </tr>
+                `;
+            }).join('');
+
+            const totalPages = Math.ceil(facultyData.length / facultyPerPage);
+            document.getElementById('faculty-page-info').innerText = `Showing ${start + 1}-${Math.min(end, facultyData.length)} of ${facultyData.length}`;
+            document.getElementById('prev-faculty').disabled = currentFacultyPage === 1;
+            document.getElementById('next-faculty').disabled = currentFacultyPage >= totalPages;
+        }
+
+        function changeFacultyPage(dir) {
+            currentFacultyPage += dir;
+            loadFaculty();
+        }
+
+        async function loadRooms() {
+            if (originalRoomData.length === 0) await loadStatusSummaries();
+
+            const start = (currentRoomsPage - 1) * roomsPerPage;
+            const end = start + roomsPerPage;
+            const paginated = roomData.slice(start, end);
+
+            const tableBody = document.getElementById('rooms-table-body');
+            if (!paginated || paginated.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:2rem; color:var(--text-muted);">No room records found.</td></tr>';
+                document.getElementById('rooms-page-info').innerText = '';
+                return;
+            }
+
+            tableBody.innerHTML = paginated.map(room => {
+                const isBusy = room.status === 'BUSY';
+                const statusColor = isBusy ? '#ef4444' : '#22c55e';
+                const statusText = isBusy ? 'OCCUPIED' : 'VACANT';
+                return `
+                    <tr style="border-bottom:1px solid var(--border-soft);">
+                        <td style="padding:0.4rem 0.5rem; font-weight:600;">${room.code}</td>
+                        <td style="padding:0.4rem 0.5rem;"><span style="color:${statusColor}; font-weight:600; font-size:0.7rem;">● ${statusText}</span></td>
+                        <td style="padding:0.4rem 0.5rem; color:var(--text-muted); font-size:0.7rem;">${isBusy ? room.current_class || '—' : '—'}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            const totalPages = Math.ceil(roomData.length / roomsPerPage);
+            document.getElementById('rooms-page-info').innerText = `Showing ${start + 1}-${Math.min(end, roomData.length)} of ${roomData.length}`;
+            document.getElementById('prev-rooms').disabled = currentRoomsPage === 1;
+            document.getElementById('next-rooms').disabled = currentRoomsPage >= totalPages;
+        }
+
+        function changeRoomsPage(dir) {
+            currentRoomsPage += dir;
+            loadRooms();
+        }
+
+        function showView(viewId) {
+            // Update Navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.querySelector('span')?.innerText.toLowerCase().includes(viewId.toLowerCase())) item.classList.add('active');
+            });
+
+            // Update Sections
+            document.querySelectorAll('.view-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            const activeSection = document.getElementById('view-' + viewId);
+            activeSection.classList.add('active');
+
+            if (viewId === 'faculty') loadFaculty();
+            if (viewId === 'rooms') loadRooms();
+
+            // Update Header (Dynamic titles handle better than static)
+        }
+
+        function handleFullQnA(e) {
+            if (e.key === 'Enter') {
+                sendFullQnA();
+                document.getElementById('qna-suggestions').style.display = 'none';
+            }
+        }
+
+        function handleQnASuggestions() {
+            const input = document.getElementById('full-qna-input');
+            const suggestionsDiv = document.getElementById('qna-suggestions');
+            const rawQuery = input.value.trim();
+            const query = rawQuery.toLowerCase();
+            const words = rawQuery.split(/\s+/).filter(w => w.length > 0);
+
+            if (query.length < 2) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+
+            // Extract unique values for suggestions from originalScheduleData
+            const instructors = [...new Set(originalScheduleData.filter(s => s.instructor_name).map(s => s.instructor_name))];
+            const subjects = [...new Set(originalScheduleData.filter(s => s.subject_name).map(s => s.subject_name))];
+            const rooms = [...new Set(originalScheduleData.filter(s => s.room_code).map(s => s.room_code))];
+            const classes = [...new Set(originalScheduleData.filter(s => s.class_code).map(s => s.class_code))];
+
+            const commonQueries = [
+                // Faculty Availability
+                "Who is free right now?", "Which teachers are available now?", "Is any teacher free?",
+                "Who can take a substitute class?", "Which faculty is available from 12 to 1?",
+                "Teachers free this hour", "Faculty available today", "Any professor available now?",
+
+                // Room / Lab Availability
+                "Which rooms are free now?", "Which rooms are vacant right now?", "Is room S-404 vacant?",
+                "Is lab C-2 free now?", "Which labs are empty?", "Empty classrooms now",
+                "Available rooms today", "Vacant labs this hour",
+
+                // Current / Next Class
+                "Which class is going on now?", "What is my current class?", "What is my next class?",
+                "Next class today", "Which lecture is happening now?", "Who is teaching now?",
+                "What class do I have next?",
+
+                // Teacher-Centric
+                "My classes today", "My timetable for today", "My schedule now",
+                "Subjects I teach", "Classes I am handling today", "My next lecture",
+                "My free periods today",
+
+                // Student / Batch / Division
+                "Show TY IT timetable", "TY IT classes today", "SE CS schedule",
+                "Which class is in S-507?", "Who teaches TY IT DBMS?", "Which subject is in lab now?",
+
+                // Subject / Faculty Mapping
+                "Who teaches DBMS?", "Who teaches EM-IV?", "Faculty for Operating Systems",
+                "DBMS teacher name", "Which professor teaches CN?",
+
+                // Time-Based Queries
+                "From 12 to 1 free teachers", "Available from 2 to 3", "Free after 4 PM",
+                "Classes after lunch", "Morning lectures today",
+
+                // Short Natural Phrases (for Prediction)
+                "Who is", "Which rooms", "Which labs", "Is room", "Is lab",
+                "Is professor", "I want", "Show me", "What is my", "Do I have",
+
+                // Admin / Coordination
+                "Free faculty now", "Rooms available this period", "Substitute teacher needed",
+                "Unassigned classrooms", "Faculty without lecture now"
+            ];
+
+            let matches = [];
+            const isShort = words.length < 3;
+
+            // Multi-stage Filter Logic: Prefix vs Semantic Overlap
+            const filterFn = (item) => {
+                const itemLow = item.toLowerCase();
+                if (isShort) return itemLow.startsWith(query) || itemLow.split(' ').some(w => w.startsWith(query));
+                // Semantic strategy for 3+ words: ensure all query terms are present
+                return words.every(word => itemLow.includes(word.toLowerCase()));
+            };
+
+            // Rank by Priority (Popularity + Syllabus weight)
+            const process = (list, category, icon, basePriority) => {
+                list.filter(filterFn).forEach(text => {
+                    let score = basePriority;
+                    // Boost if Syllabus (Subject)
+                    if (category === 'SUBJECT') score -= 0.2;
+                    matches.push({ text, category, icon, score });
+                });
+            };
+
+            process(commonQueries, 'QUICK ACTION', 'fa-bolt', 1);
+            process(subjects, 'SUBJECT', 'fa-book', 1.5); // Syllabus Weight
+            process(instructors, 'FACULTY', 'fa-user-tie', 2);
+            process(classes, 'CLASS', 'fa-users', 2.5);
+            process(rooms, 'ROOM', 'fa-door-open', 3);
+
+            // Sort by score and limit to 5-7 results
+            matches.sort((a, b) => a.score - b.score);
+
+            // De-duplicate
+            const seen = new Set();
+            const filteredMatches = matches.filter(m => {
+                if (seen.has(m.text)) return false;
+                seen.add(m.text);
+                return true;
+            });
+
+            if (filteredMatches.length === 0) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+
+            suggestionsDiv.innerHTML = filteredMatches.slice(0, 7).map(m => `
+                <div class="suggestion-item" onclick="selectQnASuggestion('${m.text}')">
+                    <i class="fas ${m.icon} suggestion-icon"></i>
+                    <span>${m.text}</span>
+                    <span class="suggestion-category">${m.category}</span>
+                </div>
+            `).join('');
+
+            suggestionsDiv.style.display = 'block';
+        }
+
+        function selectQnASuggestion(text) {
+            const input = document.getElementById('full-qna-input');
+            input.value = text;
+            document.getElementById('qna-suggestions').style.display = 'none';
+            input.focus();
+        }
+
+        // Close suggestions on outside click
+        document.addEventListener('click', (e) => {
+            const suggestionsDiv = document.getElementById('qna-suggestions');
+            const input = document.getElementById('full-qna-input');
+            if (suggestionsDiv && !input.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+                suggestionsDiv.style.display = 'none';
+            }
+        });
+
+        async function sendFullQnA() {
+            const input = document.getElementById('full-qna-input');
+            const q = input.value.trim();
+            if (!q) return;
+
+            const welcome = document.getElementById('qna-welcome-screen');
+            if (welcome) welcome.remove();
+
+            const chatArea = document.getElementById('full-chat-area');
+
+            // User message
+            chatArea.innerHTML += `
+                <div class="message user" style="align-self: flex-end; margin-left: 15%; margin-bottom: 0.75rem;">
+                    <div class="message-bubble" style="background:var(--bg-tertiary); padding:0.75rem; border-radius:10px; border-bottom-right-radius:2px; border: 1px solid var(--border-soft);">
+                        <p style="margin:0; font-weight:500; font-size: 0.8rem; color: var(--text-primary);">${q}</p>
+                    </div>
+                </div>
+            `;
+            input.value = '';
+            chatArea.scrollTop = chatArea.scrollHeight;
+
+            // Typing indicator
+            const botMsgId = 'bot-' + Date.now();
+            chatArea.innerHTML += `
+                <div class="message bot" id="${botMsgId}" style="margin-bottom: 0.75rem; display: flex; gap: 0.5rem; align-items: flex-start;">
+                    <div class="message-avatar" style="font-size: 0.9rem; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: var(--bg-tertiary); border-radius: 50%;">🧠</div>
+                    <div class="message-bubble" style="background:var(--bg-secondary); border:1px solid var(--border-soft); padding:0.75rem; border-radius:10px; border-bottom-left-radius:2px; flex: 1;">
+                        <p style="margin:0; font-size: 0.8rem; color: var(--text-secondary);"><i class="fas fa-circle-notch fa-spin"></i> Reasoning...</p>
+                    </div>
+                </div>
+            `;
+            chatArea.scrollTop = chatArea.scrollHeight;
+
+            try {
+                const response = await fetch(`${API_BASE}/qna/ask`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('campusiq_token')}` },
+                    body: JSON.stringify({ query: q })
+                });
+                const data = await response.json();
+                const botMsg = document.getElementById(botMsgId);
+                if (data.success) {
+                    botMsg.querySelector('.message-bubble').innerHTML = `<p style="line-height:1.5; color:var(--text-primary); text-align: left; font-size: 0.8rem; margin: 0;">${data.data.response}</p>`;
+                } else {
+                    botMsg.querySelector('.message-bubble').innerHTML = `<p style="color:#ef4444; font-size: 0.8rem; margin: 0;">${data.message || 'Error processing request.'}</p>`;
+                }
+            } catch (err) {
+                document.getElementById(botMsgId).querySelector('.message-bubble').innerHTML = `<p>Database connection error.</p>`;
+            }
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function toggleFullWeek() {
+            isFullWeekView = !isFullWeekView;
+            const toggle = document.getElementById('full-week-toggle');
+            if (isFullWeekView) {
+                toggle.style.borderColor = 'var(--text-primary)';
+                toggle.querySelector('span').innerText = 'FULL WEEK';
+                toggle.querySelector('i').style.color = 'var(--accent-blue)';
+            } else {
+                toggle.style.borderColor = 'var(--border-soft)';
+                toggle.querySelector('span').innerText = 'TODAY';
+                toggle.querySelector('i').style.color = 'var(--text-muted)';
+            }
+            applyScheduleFilters();
+        }
+
+        function togglePersonalSchedule() {
+            isPersonalView = !isPersonalView;
+            const toggle = document.getElementById('my-schedule-toggle');
+            if (isPersonalView) {
+                toggle.style.background = 'var(--bg-tertiary)';
+                toggle.style.borderColor = 'var(--text-primary)';
+            } else {
+                toggle.style.background = 'var(--bg-secondary)';
+                toggle.style.borderColor = 'var(--border-soft)';
+            }
+            applyScheduleFilters();
+        }
+
+        function applyScheduleFilters() {
+            const query = document.getElementById('schedule-search').value.trim().toLowerCase();
+            const todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+
+            scheduleData = originalScheduleData.filter(s => {
+                // Rule 1: Time/Day Scope
+                // If searching, we always show all days. 
+                // If NOT searching, we follow the isFullWeekView toggle.
+                const inScope = (query.length > 0) || isFullWeekView || (s.day_of_week === todayIdx);
+                if (!inScope) return false;
+
+                // Rule 2: Search Match
+                const matchesSearch = !query ||
+                    s.subject_name.toLowerCase().includes(query) ||
+                    s.instructor_name.toLowerCase().includes(query) ||
+                    s.class_code.toLowerCase().includes(query) ||
+                    (s.room_code && s.room_code.toLowerCase().includes(query));
+
+                if (!matchesSearch) return false;
+
+                // Rule 3: Identity Match (Personal View)
+                if (isPersonalView && currentUserRole === 'FACULTY' && currentUserFullName) {
+                    return s.instructor_name && s.instructor_name.toLowerCase() === currentUserFullName.toLowerCase();
+                }
+
+                return true;
+            });
+
+            currentSchedulePage = 1;
+            renderSchedules();
+        }
+
+        function filterSchedules() {
+            applyScheduleFilters();
+        }
+
+        function filterRooms() {
+            const query = document.getElementById('rooms-search').value.toLowerCase();
+            roomData = originalRoomData.filter(r =>
+                r.code.toLowerCase().includes(query) ||
+                (r.current_class && r.current_class.toLowerCase().includes(query))
+            );
+            currentRoomsPage = 1;
+            loadRooms();
+        }
+
+        function filterFaculty() {
+            const query = document.getElementById('faculty-search').value.toLowerCase();
+            facultyData = originalFacultyData.filter(f =>
+                f.name.toLowerCase().includes(query) ||
+                (f.current_class && f.current_class.toLowerCase().includes(query))
+            );
+            currentFacultyPage = 1;
+            loadFaculty();
+        }
+
+        function logout() {
+            localStorage.removeItem('campusiq_token');
+            localStorage.removeItem('campusiq_user_id');
+            window.location.href = '/';
+        }
+
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme');
+            const target = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', target);
+            localStorage.setItem('campusiq_theme', target);
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const savedTheme = localStorage.getItem('campusiq_theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+
+            // Core initialization sequence
+            await loadProfile();
+            await loadDashboard();
+        });
+    </script>
+</body>
+
+</html>

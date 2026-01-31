@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College Admin Dashboard | CampusIQ</title>
+
+    <!-- Premium Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+
+    <style>
+        :root {
+            --sidebar-width: 280px;
+            --header-height: 80px;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            display: flex;
+            margin: 0;
+            font-family: var(--font-body);
+            transition: background var(--transition-slow);
+        }
+
+        /* Sidebar Styles - Synchronized with Main Dashboard */
+        .dashboard-sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-soft);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            z-index: 1000;
+            padding: var(--space-xl);
+            transition: background var(--transition-slow);
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            margin-bottom: var(--space-3xl);
+            padding: 0 var(--space-sm);
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.9rem 1.2rem;
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all var(--transition-fast);
+            cursor: pointer;
+        }
+
+        .nav-link:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .nav-link.active {
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            box-shadow: var(--shadow-md);
+        }
+
+        .nav-link i {
+            width: 20px;
+            font-size: 1.1rem;
+            transition: color 0.2s;
+        }
+
+        .sidebar-footer {
+            padding-top: var(--space-xl);
+            border-top: 1px solid var(--border-soft);
+        }
+
+        /* Main Content */
+        .dashboard-main {
+            flex: 1;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+        }
+
+        .dashboard-header {
+            flex-shrink: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            margin: 1.5rem 1.5rem 1rem 1.5rem;
+            border: 1px solid var(--border-soft);
+            box-shadow: var(--shadow-sm);
+            transition: all var(--transition-slow);
+        }
+
+        .header-title-wrapper h1 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin: 0;
+            color: var(--text-primary);
+            font-family: var(--font-heading);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .header-status-box {
+            text-align: right;
+            padding: 0.5rem 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            border: 1px solid var(--border-soft);
+        }
+
+        .dashboard-content {
+            padding: 1rem 1.5rem 1.5rem 1.5rem;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        /* Mobile Adjustments */
+        .mobile-menu-btn {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-soft);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 1.1rem;
+            margin-right: 1rem;
+        }
+
+        #sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-sidebar {
+                position: fixed;
+                left: -100%;
+                top: 0;
+                transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .dashboard-sidebar.active {
+                left: 0;
+            }
+
+            #sidebar-overlay.active {
+                display: block;
+            }
+
+            .dashboard-header {
+                margin: 1rem;
+                padding: 0.75rem 1rem;
+            }
+
+            .mobile-menu-btn {
+                display: flex;
+            }
+
+            .header-status-box {
+                display: none;
+            }
+
+            .header-title-wrapper h1 {
+                font-size: 1.1rem;
+            }
+
+            .header-title-wrapper p {
+                display: none;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .dashboard-content {
+                padding: 0 1rem 1rem 1rem;
+            }
+
+            .user-profile div:first-child {
+                display: none;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: var(--space-lg);
+            margin-bottom: var(--space-2xl);
+        }
+
+        .glass-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-soft);
+            border-radius: var(--radius-lg);
+            padding: var(--space-xl);
+            transition: all var(--transition-base);
+            position: relative;
+            overflow: hidden;
+        }
+
+        [data-theme="dark"] .glass-card {
+            background: var(--bg-secondary);
+            border-color: var(--border-soft);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+        }
+
+        [data-theme="dark"] .glass-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.05), transparent 60%);
+            pointer-events: none;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--text-muted);
+        }
+
+        /* Tab Content */
+        .tab-pane {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-soft);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            transition: all var(--transition-fast);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--text-muted);
+            box-shadow: 0 0 0 2px var(--glass-border);
+        }
+
+        /* Branding Preview */
+        .branding-preview {
+            padding: var(--space-xl);
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-lg);
+            border: 1px dashed var(--border-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        /* Common Components */
+        .data-table-wrapper {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-soft);
+            border-radius: var(--radius-lg);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .data-table {
+            width: 100%;
+            min-width: 600px;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .data-table th {
+            padding: 1rem 1.5rem;
+            background: var(--bg-tertiary);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-soft);
+        }
+
+        .data-table td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-soft);
+            font-size: 0.875rem;
+        }
+
+        .btn-pill {
+            border-radius: var(--radius-pill);
+        }
+
+        .avatar-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .notification-toast {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 2000;
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-md);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-soft);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+            }
+
+            to {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <aside class="dashboard-sidebar">
+        <div class="sidebar-brand">
+            <span class="brand-logo" id="college-logo-emoji" style="font-size: 1.75rem;">🏫</span>
+            <span class="brand-name" id="college-name-display" style="font-size: 1.25rem; font-weight: 700;">Your
+                College</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-link active" onclick="switchTab('overview', this); closeSidebarOnMobile()">
+                <i class="fas fa-chart-line"></i> Overview
+            </div>
+            <div class="nav-link" onclick="switchTab('branding', this); closeSidebarOnMobile()">
+                <i class="fas fa-paint-brush"></i> Branding Studio
+            </div>
+            <div class="nav-link" onclick="switchTab('users', this); closeSidebarOnMobile()">
+                <i class="fas fa-users"></i> Member Hub
+            </div>
+            <div class="nav-link" onclick="switchTab('schedules', this); closeSidebarOnMobile()">
+                <i class="fas fa-calendar-alt"></i> Schedules
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="nav-link" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Sign Out
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+        <header class="dashboard-header">
+            <div class="header-title-wrapper">
+                <h1 id="tab-title">Campus Administration</h1>
+                <p id="tab-subtitle" style="font-size: 0.75rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">
+                    Manage your college environment with precision.</p>
+            </div>
+
+            <div class="header-actions">
+                <div class="header-status-box">
+                    <div id="live-time"
+                        style="font-size: 0.9rem; font-weight: 700; font-family: 'SF Mono', monospace; color: var(--text-primary);">
+                    </div>
+                    <div id="live-date"
+                        style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+                    </div>
+                </div>
+
+                <button class="theme-toggle" onclick="toggleTheme()"
+                    style="width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border-soft); background: var(--bg-primary); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-sun" id="theme-icon-light" style="font-size: 0.9rem;"></i>
+                    <i class="fas fa-moon" id="theme-icon-dark" style="font-size: 0.9rem;"></i>
+                </button>
+
+                <div class="user-profile"
+                    style="display: flex; align-items: center; gap: 0.75rem; padding: 0.4rem 0.75rem; background: var(--bg-primary); border-radius: 10px; border: 1px solid var(--border-soft);">
+                    <div style="text-align: right;">
+                        <div id="user-display-name"
+                            style="font-weight: 600; font-size: 0.8rem; color: var(--text-primary);">College Admin</div>
+                        <div id="user-role-badge" style="font-size: 0.65rem; color: var(--text-muted);">Admin Panel
+                        </div>
+                    </div>
+                    <div id="user-avatar-header"
+                        style="width: 36px; height: 36px; border-radius: 8px; background: var(--accent-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;">
+                        CA
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="dashboard-content">
+            <!-- Overview Tab -->
+            <div id="tab-overview" class="tab-pane active">
+                <div class="stats-grid">
+                    <div class="glass-card">
+                        <div class="form-label">TOTAL FACULTY</div>
+                        <div class="stat-number" id="stat-faculty"
+                            style="font-size: 2.25rem; font-family: var(--font-display); margin-top: 0.5rem;">0</div>
+                    </div>
+                    <div class="glass-card">
+                        <div class="form-label">TOTAL STAFF</div>
+                        <div class="stat-number" id="stat-staff"
+                            style="font-size: 2.25rem; font-family: var(--font-display); margin-top: 0.5rem;">0</div>
+                    </div>
+                    <div class="glass-card">
+                        <div class="form-label">ACTIVE SCHEDULES</div>
+                        <div class="stat-number" id="stat-schedules"
+                            style="font-size: 2.25rem; font-family: var(--font-display); margin-top: 0.5rem; color: var(--accent-blue); text-shadow: 0 0 15px rgba(59, 130, 246, 0.3);">
+                            0</div>
+                    </div>
+                </div>
+
+                <div class="glass-panel">
+                    <h3 style="font-family: var(--font-display); font-size: 1.25rem; margin-bottom: var(--space-lg);">
+                        Recent Personnel</h3>
+                    <div class="data-table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Role</th>
+                                    <th>Joined</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-users-body">
+                                <tr>
+                                    <td colspan="4" style="text-align:center;">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Branding Tab -->
+            <div id="tab-branding" class="tab-pane">
+                <h2 style="font-family: var(--font-display); margin-bottom: var(--space-xl);">Branding Studio</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2xl);">
+                    <div class="glass-panel">
+                        <div class="form-group">
+                            <label class="form-label">COLLEGE NAME</label>
+                            <input type="text" id="college-name" class="form-input"
+                                placeholder="e.g. Pillai College of Engineering" oninput="updateBrandingPreview()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">LOGO URL (Optional)</label>
+                            <input type="text" id="logo-url" class="form-input"
+                                placeholder="https://example.com/logo.png" oninput="updateBrandingPreview()">
+                        </div>
+                        <button class="btn btn-dark btn-pill btn-block" onclick="updateBranding()">UPDATE
+                            BRANDING</button>
+                    </div>
+
+                    <div class="glass-panel">
+                        <label class="form-label">IDENTITY PREVIEW</label>
+                        <div class="branding-preview">
+                            <div id="college-logo"
+                                style="width: 80px; height: 80px; background: var(--bg-primary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                                🏫</div>
+                            <div id="preview-name"
+                                style="font-family: var(--font-heading); font-weight: 700; font-size: 1.25rem;">Your
+                                College</div>
+                        </div>
+                        <p style="margin-top: 1rem; font-size: 0.75rem; color: var(--text-muted); text-align: center;">
+                            This branding will be visible to all faculty and students across the platform.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Tab -->
+            <div id="tab-users" class="tab-pane">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-xl);">
+                    <h2 style="font-family: var(--font-display);">Personnel Management</h2>
+                    <button class="btn btn-dark btn-pill" onclick="showModal('user-modal')">+ ADD MEMBER</button>
+                </div>
+                <div class="data-table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Member</th>
+                                <th>Role</th>
+                                <th>Email</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="all-users-body">
+                            <!-- Dynamic -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Schedules Tab -->
+            <div id="tab-schedules" class="tab-pane">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-xl);">
+                    <h2 style="font-family: var(--font-display);">Timetable Management</h2>
+                    <div style="display: flex; gap: var(--space-md);">
+                        <input type="file" id="csv-upload-input" accept=".csv" style="display: none;"
+                            onchange="handleCsvUpload(this)">
+                        <button class="btn btn-outline btn-pill"
+                            onclick="document.getElementById('csv-upload-input').click()">
+                            <i class="fas fa-upload"></i> IMPORT CSV
+                        </button>
+                        <button class="btn btn-dark btn-pill" onclick="showModal('schedule-modal')">+ ADD ENTRY</button>
+                    </div>
+                </div>
+
+                <div class="glass-card"
+                    style="margin-bottom: var(--space-xl); border-style: dashed; text-align: center; cursor: pointer;"
+                    onclick="document.getElementById('csv-upload-input').click()">
+                    <div style="font-size: 0.875rem; color: var(--text-muted);">
+                        <i class="fas fa-file-csv"
+                            style="font-size: 2rem; margin-bottom: 0.5rem; display: block; color: var(--text-primary);"></i>
+                        Drag and drop your timetable CSV here or click to browse.
+                    </div>
+                </div>
+
+                <div class="data-table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Day</th>
+                                <th>Time</th>
+                                <th>Class</th>
+                                <th>Subject</th>
+                                <th>Faculty</th>
+                                <th>Room</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="schedules-body">
+                            <tr>
+                                <td colspan="7" style="text-align:center;">No schedules found. Upload a CSV to get
+                                    started.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- User Modal -->
+        <div id="user-modal" class="modal"
+            style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center;">
+            <div class="glass-card" style="width: 100%; max-width: 450px; background: var(--bg-secondary);">
+                <h3 style="font-family: var(--font-display);">Add New Member</h3>
+                <div style="margin-top: 1.5rem;">
+                    <div class="form-group">
+                        <label class="form-label">FULL NAME</label>
+                        <input type="text" id="new-user-name" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">EMAIL ADDRESS</label>
+                        <input type="email" id="new-user-email" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">ROLE</label>
+                        <select id="new-user-role" class="form-input">
+                            <option value="FACULTY">Faculty</option>
+                            <option value="STAFF">Staff</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                        <button class="btn btn-dark btn-pill btn-block" onclick="addUser()">CREATE USER</button>
+                        <button class="btn btn-outline btn-pill btn-block"
+                            onclick="hideModal('user-modal')">CANCEL</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule Modal -->
+        <div id="schedule-modal" class="modal"
+            style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center;">
+            <div class="glass-card" style="width: 100%; max-width: 500px; background: var(--bg-secondary);">
+                <h3 style="font-family: var(--font-display);">Add Schedule Entry</h3>
+                <div style="margin-top: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label class="form-label">SUBJECT NAME</label>
+                        <input type="text" id="sch-subject" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">DAY</label>
+                        <select id="sch-day" class="form-input">
+                            <option value="0">Monday</option>
+                            <option value="1">Tuesday</option>
+                            <option value="2">Wednesday</option>
+                            <option value="3">Thursday</option>
+                            <option value="4">Friday</option>
+                            <option value="5">Saturday</option>
+                            <option value="6">Sunday</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">CLASS CODE</label>
+                        <input type="text" id="sch-class" class="form-input" placeholder="e.g. COMP-A">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">START TIME</label>
+                        <input type="time" id="sch-start" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">END TIME</label>
+                        <input type="time" id="sch-end" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">FACULTY NAME</label>
+                        <input type="text" id="sch-faculty" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">ROOM CODE</label>
+                        <input type="text" id="sch-room" class="form-input">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button class="btn btn-dark btn-pill btn-block" onclick="addScheduleEntry()">SAVE ENTRY</button>
+                    <button class="btn btn-outline btn-pill btn-block"
+                        onclick="hideModal('schedule-modal')">CANCEL</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script>
+        const API_BASE = 'http://localhost:5000/api/v1';
+        // const API_BASE = '/api/v1'; // Use this for production
+
+        async function getAuthToken() {
+            return localStorage.getItem('campusiq_token') || localStorage.getItem('access_token');
+        }
+
+        // Live Clock
+        function updateClock() {
+            const now = new Date();
+            const timeEl = document.getElementById('live-time');
+            const dateEl = document.getElementById('live-date');
+            if (timeEl) timeEl.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            if (dateEl) dateEl.textContent = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        function toggleSidebar() {
+            document.getElementById('main-sidebar').classList.toggle('active');
+            document.getElementById('sidebar-overlay').classList.toggle('active');
+        }
+
+        function closeSidebarOnMobile() {
+            if (window.innerWidth <= 1024) {
+                document.getElementById('main-sidebar').classList.remove('active');
+                document.getElementById('sidebar-overlay').classList.remove('active');
+            }
+        }
+
+        async function fetchWithAuth(url, options = {}) {
+            const token = await getAuthToken();
+            if (!token) { window.location.href = '/'; return null; }
+
+            const headers = { 'Content-Type': 'application/json', ...options.headers, 'Authorization': `Bearer ${token}` };
+
+            // For Super Admins viewing a specific college
+            const viewAs = localStorage.getItem('campusiq_view_as_college');
+            if (viewAs) headers['X-Tenant-ID'] = viewAs;
+
+            try {
+                const res = await fetch(url, {
+                    ...options,
+                    headers: headers
+                });
+                if (res.status === 401 || res.status === 403) {
+                    console.error('Auth error', res.status);
+                    // Only redirect if absolutely unauthorized
+                    if (res.status === 401) window.location.href = '/';
+                    return res;
+                }
+                return res;
+            } catch (err) {
+                console.error('Fetch error:', err);
+                return null;
+            }
+        }
+
+        function switchTab(tabId, el) {
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            el.classList.add('active');
+
+            const title = el.innerText.trim();
+            document.getElementById('tab-title').textContent = title;
+
+            const subtitles = {
+                'overview': 'Manage your college environment with precision.',
+                'branding': 'Customize your institute\'s visual identity.',
+                'users': 'Manage faculty and staff access.',
+                'schedules': 'Browse and coordinate institutional schedules.'
+            };
+            document.getElementById('tab-subtitle').textContent = subtitles[tabId] || 'Platform Management Console';
+
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+
+            if (tabId === 'branding') loadBranding();
+            if (tabId === 'users') loadUsers();
+            if (tabId === 'schedules') loadSchedules();
+        }
+
+        async function loadUserInfo() {
+            try {
+                const res = await fetchWithAuth(`${API_BASE}/auth/me`);
+                if (!res || !res.ok) return;
+                const result = await res.json();
+                if (result.success) {
+                    const user = result.data;
+                    const collegeName = user.college_name || 'Your College';
+
+                    // Update headerarea
+                    const initials = document.getElementById('user-avatar-header');
+                    if (initials) initials.textContent = (user.full_name || user.name || 'CA').substring(0, 2).toUpperCase();
+
+                    const nameEl = document.getElementById('user-display-name');
+                    const roleBadge = document.getElementById('user-role-badge');
+                    if (nameEl) nameEl.textContent = user.full_name || user.name || user.email;
+                    if (roleBadge) roleBadge.textContent = `${user.role_name || 'Admin'} • ${collegeName}`;
+
+                    // Update sidebar
+                    const sidebarName = document.getElementById('college-name-display');
+                    if (sidebarName) sidebarName.textContent = collegeName;
+
+                    if (user.college_logo_url) {
+                        const logoEmoji = document.getElementById('college-logo-emoji');
+                        if (logoEmoji) logoEmoji.innerHTML = `<img src="${user.college_logo_url}" style="height: 24px; width: 24px; object-fit: contain;">`;
+                    }
+                }
+            } catch (err) {
+                console.error('UserInfo load error:', err);
+            }
+        }
+
+        async function loadDashboard() {
+            const res = await fetchWithAuth(`${API_BASE}/college-admin/dashboard`);
+            if (!res) return;
+            const result = await res.json();
+            if (result.success) {
+                const data = result.data;
+                document.getElementById('stat-faculty').textContent = data.stats?.total_faculty || 0;
+                document.getElementById('stat-staff').textContent = data.stats?.total_staff || 0;
+                document.getElementById('stat-schedules').textContent = data.stats?.active_schedules || 0;
+
+                // Refresh branding if available in dashboard data
+                if (data.college) {
+                    document.getElementById('college-name').value = data.college.college_name || '';
+                    document.getElementById('logo-url').value = data.college.college_logo_url || '';
+                    updateBrandingPreview();
+                } else {
+                    loadBranding();
+                }
+                loadUsers();
+            }
+        }
+
+        async function loadBranding() {
+            const res = await fetchWithAuth(`${API_BASE}/college-admin/branding`);
+            if (!res) return;
+            const result = await res.json();
+            if (result.success) {
+                const data = result.data.data ? result.data.data : result.data;
+                document.getElementById('college-name').value = data.college_name || '';
+                document.getElementById('logo-url').value = data.college_logo_url || '';
+
+                updateBrandingPreview();
+            }
+        }
+
+        function updateBrandingPreview() {
+            const name = document.getElementById('college-name').value || 'Your College';
+            const logoUrl = document.getElementById('logo-url').value;
+
+            document.getElementById('college-name-display').textContent = name;
+            document.getElementById('preview-name').textContent = name;
+
+            const logoContainer = document.getElementById('college-logo');
+            const logoEmoji = document.getElementById('college-logo-emoji');
+
+            if (logoUrl && (logoUrl.startsWith('http') || logoUrl.startsWith('https'))) {
+                const img = `<img src="${logoUrl}" alt="Logo" style="height: 32px; width: 32px; object-fit: contain; border-radius: 4px;">`;
+                if (logoContainer) logoContainer.innerHTML = img;
+                if (logoEmoji) {
+                    logoEmoji.style.fontSize = '0';
+                    logoEmoji.innerHTML = img;
+                }
+            } else {
+                if (logoContainer) logoContainer.innerHTML = '🏫';
+                if (logoEmoji) {
+                    logoEmoji.style.fontSize = '1.75rem';
+                    logoEmoji.innerHTML = '🏫';
+                }
+            }
+        }
+
+        async function updateBranding() {
+            const name = document.getElementById('college-name').value;
+            const logo = document.getElementById('logo-url').value;
+
+            notification('Saving branding...', 'info');
+            const res = await fetchWithAuth(`${API_BASE}/college-admin/branding`, {
+                method: 'PUT',
+                body: JSON.stringify({ college_name: name, college_logo_url: logo })
+            });
+
+            if (res && res.ok) {
+                notification('Branding saved successfully!', 'success');
+                loadBranding();
+            } else if (res) {
+                const err = await res.json();
+                notification('Save failed: ' + (err.message || 'Validation error'), 'error');
+            }
+        }
+
+        async function loadUsers() {
+            const res = await fetchWithAuth(`${API_BASE}/college-admin/users?status=ACTIVE`);
+            if (!res) return;
+            const result = await res.json();
+            if (result.items) {
+                const body = result.items.map(u => `
+                    <tr>
+                        <td style="font-weight: 500;">${u.full_name || 'Unnamed'}</td>
+                        <td style="font-size: 0.75rem;">${u.role_code}</td>
+                        <td>${u.email}</td>
+                        <td><button class="btn btn-outline btn-pill btn-sm" onclick="suspendUser('${u.user_id}')">SUSPEND</button></td>
+                    </tr>
+                `).join('');
+                document.getElementById('all-users-body').innerHTML = body;
+                document.getElementById('recent-users-body').innerHTML = body.substring(0, 500);
+            }
+        }
+
+        async function suspendUser(userId) {
+            if (!confirm('Are you sure you want to suspend this user?')) return;
+
+            const res = await fetchWithAuth(`${API_BASE}/college-admin/users/${userId}/deactivate`, {
+                method: 'POST'
+            });
+
+            if (res && res.ok) {
+                notification('User suspended', 'success');
+                loadUsers();
+                loadDashboard();
+            } else {
+                notification('Failed to suspend user', 'error');
+            }
+        }
+
+        async function loadAuditLogs() {
+            const res = await fetchWithAuth(`${API_BASE}/college-admin/audit-logs`);
+            if (!res) return;
+            const result = await res.json();
+            if (result.items) {
+                document.getElementById('audit-logs-body').innerHTML = result.items.map(l => `
+                    <tr>
+                        <td style="font-weight: 500;">${l.user_email}</td>
+                        <td>${l.action_type}</td>
+                        <td>${l.entity_type}:${l.entity_id.substring(0, 8)}</td>
+                        <td>${new Date(l.created_at).toLocaleString()}</td>
+                    </tr>
+                `).join('');
+            } else {
+                document.getElementById('audit-logs-body').innerHTML = '<tr><td colspan="4" style="text-align:center;">No recent actions.</td></tr>';
+            }
+        }
+
+        async function loadSchedules() {
+            const res = await fetchWithAuth(`${API_BASE}/schedules/`);
+            if (!res) return;
+            const result = await res.json();
+            if (result.success && result.data.items.length > 0) {
+                const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                document.getElementById('schedules-body').innerHTML = result.data.items.map(s => `
+                    <tr>
+                        <td style="font-weight: 600;">${days[s.day_of_week]}</td>
+                        <td>${s.start_time} - ${s.end_time}</td>
+                        <td><span class="badge" style="background: var(--bg-tertiary); color: var(--text-primary);">${s.class_code}</span></td>
+                        <td>${s.subject_name}</td>
+                        <td>${s.instructor_name}</td>
+                        <td>${s.room_code}</td>
+                        <td>
+                            <button class="btn btn-outline btn-sm" onclick="deleteSchedule('${s.schedule_id}')"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+                document.getElementById('stat-schedules').textContent = result.data.total;
+            } else {
+                document.getElementById('schedules-body').innerHTML = '<tr><td colspan="7" style="text-align:center;">No schedules found.</td></tr>';
+                document.getElementById('stat-schedules').textContent = 0;
+            }
+        }
+
+        async function handleCsvUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const token = await getAuthToken();
+            const viewAs = localStorage.getItem('campusiq_view_as_college');
+
+            notification('Uploading schedules...', 'info');
+
+            // IMPORTANT: Do NOT set Content-Type header when sending FormData
+            const headers = { 'Authorization': `Bearer ${token}` };
+            if (viewAs) headers['X-Tenant-ID'] = viewAs;
+
+            try {
+                const res = await fetch(`${API_BASE}/schedules/import`, {
+                    method: 'POST',
+                    headers: headers,
+                    body: formData
+                });
+
+                const result = await res.json();
+                if (res.ok && result.success) {
+                    notification(`Success! Imported ${result.data.imported} entries.`, 'success');
+                    loadSchedules();
+                    loadDashboard();
+                } else {
+                    notification('Import failed: ' + (result.message || result.details || 'Check CSV format'), 'error');
+                }
+            } catch (e) {
+                console.error('Upload Error:', e);
+                notification('Upload process failed', 'error');
+            }
+            input.value = ''; // Reset
+            input.parentElement.querySelector('.form-label')?.textContent ? null : null; // No-op
+        }
+
+        async function deleteSchedule(id) {
+            if (!confirm('Are you sure you want to delete this class?')) return;
+            const res = await fetchWithAuth(`${API_BASE}/schedules/${id}`, { method: 'DELETE' });
+            if (res && res.ok) {
+                notification('Schedule deleted', 'success');
+                loadSchedules();
+                loadDashboard();
+            }
+        }
+
+        function toggleTheme() {
+            const target = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', target);
+            localStorage.setItem('campusiq_theme', target);
+        }
+
+        function showModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function hideModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        async function addUser() {
+            const name = document.getElementById('new-user-name').value;
+            const email = document.getElementById('new-user-email').value;
+            const role = document.getElementById('new-user-role').value;
+
+            if (!name || !email) return notification('Please fill required fields', 'error');
+
+            const res = await fetchWithAuth(`${API_BASE}/college-admin/users`, {
+                method: 'POST',
+                body: JSON.stringify({ full_name: name, email: email, role_code: role })
+            });
+
+            if (res && res.ok) {
+                notification('User created successfully!', 'success');
+                hideModal('user-modal');
+                loadUsers();
+                loadDashboard();
+            } else {
+                const err = await res.json();
+                notification('Error: ' + (err.message || 'Failed to create user'), 'error');
+            }
+        }
+
+        async function addScheduleEntry() {
+            const data = {
+                subject_name: document.getElementById('sch-subject').value,
+                day_of_week: parseInt(document.getElementById('sch-day').value),
+                class_code: document.getElementById('sch-class').value,
+                start_time: document.getElementById('sch-start').value,
+                end_time: document.getElementById('sch-end').value,
+                instructor_name: document.getElementById('sch-faculty').value,
+                room_code: document.getElementById('sch-room').value
+            };
+
+            if (!data.subject_name || !data.class_code || !data.start_time || !data.end_time) {
+                return notification('Please fill all required fields', 'error');
+            }
+
+            const res = await fetchWithAuth(`${API_BASE}/schedules/`, {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+
+            if (res && res.ok) {
+                notification('Schedule entry added!', 'success');
+                hideModal('schedule-modal');
+                loadSchedules();
+                loadDashboard();
+            } else {
+                const err = await res.json();
+                notification('Error: ' + (err.message || 'Conflict or error'), 'error');
+            }
+        }
+
+        function notification(msg, type) {
+            const n = document.createElement('div');
+            n.className = 'notification-toast';
+            const color = type === 'success' ? '#10b981' : (type === 'error' ? '#ef4444' : 'var(--text-primary)');
+            n.style.borderLeft = `4px solid ${color}`;
+            n.innerHTML = `<i class="fas fa-${type === 'success' ? 'check' : (type === 'error' ? 'exclamation' : 'info')}-circle" style="color: ${color}"></i> ${msg}`;
+            document.body.appendChild(n);
+            setTimeout(() => n.remove(), 4000);
+        }
+
+        function logout() {
+            localStorage.removeItem('campusiq_token');
+            localStorage.removeItem('campusiq_user_id');
+            localStorage.removeItem('campusiq_view_as_college');
+            window.location.href = '/';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.documentElement.setAttribute('data-theme', localStorage.getItem('campusiq_theme') || 'light');
+            loadUserInfo();
+            loadDashboard();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CampusIQ | Smart Academic Intelligence</title>
+
+    <!-- Premium Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body data-theme="light">
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <span class="brand-logo">🎓</span>
+                <div class="brand-text">
+                    <span class="brand-name">CampusIQ</span>
+                    <span class="brand-tagline">SMART SCHEDULING</span>
+                </div>
+            </div>
+
+            <div class="nav-menu">
+                <a href="#features" class="nav-link">Features</a>
+                <a href="#qna" class="nav-link">Smart QnA</a>
+                <a href="#stats" class="nav-link">Insights</a>
+            </div>
+
+            <div class="nav-actions">
+                <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()">
+                    <i class="fas fa-sun" id="theme-icon-light"></i>
+                    <i class="fas fa-moon" id="theme-icon-dark"></i>
+                </button>
+                <div class="action-divider" style="height: 20px;"></div>
+                <div id="auth-nav">
+                    <button class="btn btn-dark btn-pill" onclick="showLoginModal()">Login</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-header">
+            <div class="hero-title-wrapper">
+                <h1 class="hero-title">Academic <br><span
+                        style="font-family: var(--font-display); font-style: italic;">Intelligence</span>
+                    <br>
+                </h1>
+            </div>
+            <div id="auth-hero">
+                <button class="btn btn-dark btn-pill join-btn" onclick="showLoginModal()">JOIN US</button>
+            </div>
+        </div>
+
+        <p class="hero-subtitle">The all-in-one platform for institutes to manage schedules, track
+            faculty availability, and query academic data with AI.</p>
+
+        <div class="hero-image-container">
+            <div class="hero-image">
+                <img src="https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=1186&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                    alt="Campus">
+            </div>
+
+            <!-- Premium Action Bar -->
+            <div class="action-bar">
+                <button class="action-btn active">Overview</button>
+                <button class="action-btn" onclick="scrollToSection('qna')">Schedule</button>
+                <button class="action-btn">Faculty</button>
+                <div class="action-divider"></div>
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="home-search-input" placeholder="Search classrooms..."
+                        onfocus="showLoginModal()">
+                </div>
+                <div class="action-divider"></div>
+                <button class="action-btn accent" onclick="showLoginModal()">GET STARTED</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section id="stats" class="stats-section">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-number">1,500+</span>
+                    <span class="stat-label">DAILY SESSIONS</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-number">140+</span>
+                    <span class="stat-label">SMART ROOMS</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-number">98%</span>
+                    <span class="stat-label">SYNC ACCURACY</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-label">SYSTEM FEATURES</span>
+                <h2 class="section-title">Institutional Protocol</h2>
+                <p class="section-desc">Powerful tools to streamline your academic life and campus management.</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon-minimal"><i class="fas fa-calendar-check"></i></div>
+                    <h3>Timetable Sync</h3>
+                    <p>Real-time department-wise schedule management with automatic conflict detection.</p>
+                    <a href="#" class="feature-link">Department View <i class="fas fa-arrow-right"></i></a>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon-minimal"><i class="fas fa-search-location"></i></div>
+                    <h3>Room Finder</h3>
+                    <p>Instantly locate available classrooms and labs using live occupancy data.</p>
+                    <a href="#" class="feature-link">View Maps <i class="fas fa-arrow-right"></i></a>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon-minimal"><i class="fas fa-user-graduate"></i></div>
+                    <h3>Faculty Connect</h3>
+                    <p>Track professor availability and consult their academic schedules instantly.</p>
+                    <a href="#" class="feature-link">Profiles <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- QnA Section -->
+    <section id="qna" class="qna-section">
+        <div class="container">
+            <div class="qna-container">
+                <div class="qna-text">
+                    <span class="section-label">CAMPUS INTELLIGENCE</span>
+                    <h2 class="section-title">Smart QnA <span
+                            style="font-family: var(--font-display); font-style: italic;">Assistant</span></h2>
+                    <p class="section-desc" style="margin-left: 0;">Ask anything about the campus schedule. Our AI
+                        analyzes live institutional data to give you instant, accurate answers.</p>
+
+                    <div class="qna-info" style="margin-top: 2rem;">
+                        <h4>POPULAR QUERIES</h4>
+                        <div class="suggestions">
+                            <span class="suggestion-chip"
+                                onclick="askQuestion('Which rooms are free at 10 AM today?')">Which rooms are
+                                free?</span>
+                            <span class="suggestion-chip" onclick="askQuestion('Who teaches Big Data Analytics?')">Who
+                                teaches BDA?</span>
+                            <span class="suggestion-chip" onclick="askQuestion('Show me today\'s schedule')">Today's
+                                Schedule</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="qna-chat">
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="message bot">
+                            <div class="message-avatar">🤖</div>
+                            <div class="message-bubble">
+                                <p>Hi! I'm your Campus Assistant. How can I help you today?</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" id="qna-input" placeholder="Type your question..."
+                            onkeypress="handleKeyPress(event)">
+                        <button class="send-btn" onclick="sendQuestion()"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('login-modal')">&times;</button>
+            <div class="modal-header">
+                <h2 class="modal-title">Welcome Back</h2>
+                <p>Sign in with your institutional account</p>
+            </div>
+
+            <button class="btn-google" onclick="loginWithGoogle()" style="margin-top: 1rem;">
+                <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" alt="Google">
+                Continue with Google
+            </button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer style="padding: 4rem 0; border-top: 1px solid var(--border-soft); background: var(--bg-primary);">
+        <div class="container" style="text-align: center;">
+            <p style="font-size: 0.85rem; color: var(--text-muted);">&copy; 2026 CampusIQ - Intelligent Campus
+                Management. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>
