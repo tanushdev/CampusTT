@@ -149,13 +149,31 @@ class ScheduleService:
     def import_from_csv(self, file_storage, college_id: str, imported_by: str) -> Dict:
         """Bulk import schedules from CSV file"""
         try:
-            raw_data = file_storage.stream.read()
+            # Use .read() which is safer than .stream.read()
+            raw_data = file_storage.read()
+            if not raw_data:
+                return {'imported': 0, 'skipped': 0, 'errors': ["File is empty"]}
+                
             try: content = raw_data.decode("utf-8-sig")
-            except UnicodeDecodeError: content = raw_data.decode("latin-1")
+            except UnicodeDecodeError: 
+                try: content = raw_data.decode("utf-8")
+                except UnicodeDecodeError: content = raw_data.decode("latin-1")
             
             stream = io.StringIO(content, newline=None)
-            reader = csv.DictReader(stream)
-        except Exception as e: return {'imported': 0, 'skipped': 0, 'errors': [f"File read error: {str(e)}"]}
+            # Try to detect delimiter
+            sample = content[:1024]
+            dialect = 'excel'
+            if sample:
+                try:
+                    sniffer = csv.Sniffer()
+                    if ',' in sample or ';' in sample or '\t' in sample:
+                        dialect = sniffer.sniff(sample)
+                except: dialect = 'excel'
+            
+            reader = csv.DictReader(stream, dialect=dialect)
+        except Exception as e: 
+            current_app.logger.error(f"CSV Parse Error: {e}")
+            return {'imported': 0, 'skipped': 0, 'errors': [f"File read error: {str(e)}"]}
             
         imported, skipped, errors = 0, 0, []
         db = current_app.extensions['sqlalchemy']
@@ -168,17 +186,31 @@ class ScheduleService:
                 
                 for row_idx, row in enumerate(reader):
                     try:
-                        data = {k.lower().strip().replace(' ', '_'): v for k, v in row.items()}
-                        day = self._parse_day(data.get('day') or data.get('day_of_week'))
-                        start = self._normalize_time(data.get('start_time') or data.get('start'))
-                        end = self._normalize_time(data.get('end_time') or data.get('end'))
+                        # Safely handle None keys or non-string keys
+                        data = {}
+                        for k, v in row.items():
+                            if k:
+                                clean_k = str(k).lower().strip().replace(' ', '_').replace('(', '').replace(')', '')
+                                data[clean_k] = v
                         
-                        class_code = data.get('class_code') or data.get('class')
-                        subject = data.get('subject_name') or data.get('subject')
-                        faculty = data.get('instructor_name') or data.get('faculty')
-                        room = data.get('room_code') or data.get('room')
+                        day_val = data.get('day') or data.get('day_of_week') or data.get('weekday')
+                        day = self._parse_day(day_val)
+                        
+                        start = self._normalize_time(data.get('start_time') or data.get('start') or data.get('from'))
+                        end = self._normalize_time(data.get('end_time') or data.get('end') or data.get('to'))
+                        
+                        class_code = data.get('class_code') or data.get('class') or data.get('batch')
+                        subject = data.get('subject_name') or data.get('subject') or data.get('course')
+                        faculty = data.get('instructor_name') or data.get('faculty') or data.get('teacher')
+                        room = data.get('room_code') or data.get('room') or data.get('location')
                         
                         if day is None or not start or not end or not class_code:
+                            missing = []
+                            if day is None: missing.append(f"day({day_val})")
+                            if not start: missing.append("start")
+                            if not end: missing.append("end")
+                            if not class_code: missing.append("class")
+                            errors.append(f"Row {row_idx + 1}: Missing or invalid {', '.join(missing)}")
                             skipped += 1; continue
                         
                         conn.execute(text("""

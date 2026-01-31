@@ -178,6 +178,14 @@ def import_schedules():
     service = ScheduleService()
     result = service.import_from_csv(file, college_id, user['user_id'])
     
+    if 'error' in result:
+        return jsonify({
+            'success': False,
+            'error': True,
+            'message': result.get('message', 'Import failed'),
+            'details': result.get('errors', [])
+        }), 500
+        
     return jsonify({
         'success': True,
         'data': {
