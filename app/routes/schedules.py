@@ -153,6 +153,21 @@ def update_schedule(schedule_id):
     return jsonify({'success': True, 'data': schedule, 'message': 'Schedule updated successfully'})
 
 
+@schedules_bp.route('/all', methods=['DELETE'])
+@require_auth
+@require_roles(['COLLEGE_ADMIN', 'SUPER_ADMIN'])
+@require_tenant_access
+def delete_all_schedules():
+    """Delete all schedules for the tenant college"""
+    user = get_current_user()
+    college_id = get_tenant_college_id()
+    
+    service = ScheduleService()
+    service.delete_all_schedules(college_id, user['user_id'])
+    
+    return jsonify({'success': True, 'message': 'All schedules deleted successfully'})
+
+
 @schedules_bp.route('/<schedule_id>', methods=['DELETE'])
 @require_auth
 @require_roles(['COLLEGE_ADMIN', 'SUPER_ADMIN'])

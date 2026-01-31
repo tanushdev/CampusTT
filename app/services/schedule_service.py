@@ -122,6 +122,21 @@ class ScheduleService:
                          {"uby": uuid.UUID(str(deleted_by)), "now": datetime.utcnow(), "sid": uuid.UUID(str(schedule_id)), "cid": uuid.UUID(str(college_id))})
             conn.commit()
 
+    def delete_all_schedules(self, college_id: str, deleted_by: str):
+        """Bulk delete all schedules for a college"""
+        db = current_app.extensions['sqlalchemy']
+        with db.engine.connect() as conn:
+            conn.execute(text("""
+                UPDATE schedules 
+                SET is_deleted = 1, updated_by = :uby, updated_at = :now 
+                WHERE college_id = :cid AND is_deleted = 0
+            """), {
+                "uby": uuid.UUID(str(deleted_by)), 
+                "now": datetime.utcnow(), 
+                "cid": uuid.UUID(str(college_id))
+            })
+            conn.commit()
+
     def check_conflicts(self, college_id: str, day_of_week: int, start_time: str, end_time: str,
                         class_code: Optional[str] = None, instructor_name: Optional[str] = None,
                         room_code: Optional[str] = None, exclude_id: Optional[str] = None) -> List[Dict]:
