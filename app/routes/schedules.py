@@ -9,6 +9,8 @@ from ..middleware.tenant_middleware import require_tenant_access, get_tenant_col
 from ..services import ScheduleService
 from ..utils.exceptions import ValidationException, NotFoundException, ScheduleConflictException
 
+schedules_bp = Blueprint('schedules', __name__)
+
 @schedules_bp.route('/import/status', methods=['GET'])
 @require_auth
 @require_tenant_access
