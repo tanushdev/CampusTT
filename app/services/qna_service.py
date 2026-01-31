@@ -3,16 +3,10 @@ from flask import current_app, g
 from datetime import datetime
 import re
 import google.generativeai as genai
-import spacy
 
 class QnAService:
     def __init__(self, db_path: str = None):
         self.db_path = db_path or current_app.config.get('DATABASE_PATH', 'campusiq.db')
-        # Try-except block for spacy to avoid hard crash if model is missing
-        try:
-            self.nlp = spacy.blank("en")
-        except:
-            self.nlp = None
 
     def _get_connection(self):
         """Helper to get DB connection based on environment"""
