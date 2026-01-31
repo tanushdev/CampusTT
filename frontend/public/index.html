@@ -46,7 +46,9 @@
                 <div id="auth-nav" class="hidden-mobile">
                     <button class="btn btn-dark btn-pill" onclick="showLoginModal()">Login</button>
                 </div>
-                <button class="menu-btn show-mobile" onclick="showLoginModal()" style="font-size: 1.25rem;">
+                <!-- Updated Mobile Menu Button -->
+                <button class="menu-btn show-mobile" onclick="showLoginModal()"
+                    style="display: none; border: 1px solid var(--border-soft); background: var(--bg-tertiary); width: 40px; height: 40px; border-radius: 8px; align-items: center; justify-content: center;">
                     <i class="fas fa-bars"></i>
                 </button>
             </div>
@@ -77,18 +79,20 @@
             </div>
 
             <!-- Premium Action Bar -->
-            <div class="action-bar">
-                <button class="action-btn active">Overview</button>
-                <button class="action-btn" onclick="scrollToSection('qna')">Schedule</button>
-                <button class="action-btn">Faculty</button>
-                <div class="action-divider"></div>
-                <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="home-search-input" placeholder="Search classrooms..."
-                        onfocus="showLoginModal()">
+            <div class="action-bar-wrapper">
+                <div class="action-bar">
+                    <button class="action-btn active">Overview</button>
+                    <button class="action-btn" onclick="scrollToSection('qna')">Schedule</button>
+                    <button class="action-btn hidden-mobile">Faculty</button>
+                    <div class="action-divider hidden-mobile"></div>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="home-search-input" placeholder="Search classrooms..."
+                            onfocus="showLoginModal()">
+                    </div>
+                    <div class="action-divider hidden-mobile"></div>
+                    <button class="action-btn accent" onclick="showLoginModal()">GET STARTED</button>
                 </div>
-                <div class="action-divider"></div>
-                <button class="action-btn accent" onclick="showLoginModal()">GET STARTED</button>
             </div>
         </div>
     </section>
@@ -96,7 +100,7 @@
     <!-- Stats Section -->
     <section id="stats" class="stats-section">
         <div class="container">
-            <div class="stats-grid">
+            <div class="stats-grid grid-responsive">
                 <div class="stat-item">
                     <span class="stat-number">1,500+</span>
                     <span class="stat-label">DAILY SESSIONS</span>

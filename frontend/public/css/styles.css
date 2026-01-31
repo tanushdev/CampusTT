@@ -1078,18 +1078,27 @@ h6 {
     min-height: 100vh;
 }
 
+/* Dashboards: Sidebars become off-canvas on tablet/mobile */
 @media (max-width: 1024px) {
+    body {
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        /* Force enable scrolling on mobile */
+    }
 
-    /* Sidebars become off-canvas */
     .dashboard-sidebar,
     .sidebar {
         position: fixed !important;
         left: -100% !important;
         top: 0;
         bottom: 0;
-        z-index: 1000;
-        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        box-shadow: var(--shadow-xl);
+        width: 280px !important;
+        background: var(--bg-secondary) !important;
+        z-index: 1001 !important;
+        transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 20px 0 50px rgba(0, 0, 0, 0.2);
+        display: flex !important;
+        /* Override display:none from inline styles */
     }
 
     .dashboard-sidebar.active,
@@ -1098,13 +1107,37 @@ h6 {
     }
 
     .main-wrapper,
-    .dashboard-main {
+    .dashboard-main,
+    .main-content {
         margin-left: 0 !important;
         width: 100% !important;
+        max-width: 100vw !important;
+        overflow-y: visible !important;
+        /* Allow parent scrolling */
     }
 
-    .mobile-menu-btn {
+    .mobile-menu-btn,
+    .menu-btn {
         display: flex !important;
+    }
+
+    /* Stack Header Items */
+    .dashboard-header,
+    .card-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 1rem !important;
+        padding: 1rem !important;
+    }
+
+    .header-actions {
+        width: 100% !important;
+        justify-content: flex-start !important;
+        flex-wrap: wrap !important;
+    }
+
+    .welcome-text h1 {
+        font-size: 1.25rem !important;
     }
 }
 
@@ -1300,4 +1333,68 @@ h6 {
 
 #sidebar-overlay.active {
     display: block;
+}
+
+/* Landing Page Specific Mobile Fixes */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2.2rem !important;
+        line-height: 1.2 !important;
+    }
+
+    .hero-subtitle {
+        font-size: 0.9rem !important;
+        padding: 0 1rem;
+    }
+
+    .hero-image-container {
+        padding: 0 10px;
+    }
+
+    /* Fix the premium action bar overlap */
+    .action-bar {
+        position: relative !important;
+        bottom: 0 !important;
+        transform: none !important;
+        width: 100% !important;
+        margin-top: 2rem;
+        box-shadow: none !important;
+        border: 1px solid var(--border-soft);
+    }
+
+    .action-btn {
+        font-size: 0.75rem !important;
+        padding: 0.6rem 0.5rem !important;
+    }
+
+    /* Features/Stats stacking */
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Responsive Spacing */
+    section {
+        padding: 3rem 1rem !important;
+    }
+}
+
+/* Small adjustments for extreme small screens */
+@media (max-width: 480px) {
+    .nav-brand .brand-name {
+        font-size: 1rem !important;
+    }
+
+    .theme-toggle {
+        width: 32px !important;
+        height: 32px !important;
+    }
+
+    .user-profile {
+        display: none !important;
+        /* Hide details, keep avatar or just role */
+    }
+
+    .header-actions .user-profile-simple {
+        display: flex !important;
+    }
 }

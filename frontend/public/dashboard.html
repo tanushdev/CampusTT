@@ -106,7 +106,7 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow-y: auto;
         }
 
         @media (min-width: 1400px) {
@@ -115,16 +115,9 @@
             }
         }
 
-        .dashboard-header,
-        .card-header {
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
         .view-section {
             display: none;
             flex: 1;
-            overflow: hidden;
             flex-direction: column;
             animation: fadeIn 0.4s ease;
         }
@@ -145,33 +138,32 @@
             }
         }
 
-        /* Cleaned Up Card & View Components */
+        /* Essential UI Components */
         .card {
             background: var(--bg-secondary);
             border: 1px solid var(--border-soft);
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow-sm);
-            overflow: hidden;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
         }
 
         .card-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border-soft);
-            background: var(--bg-secondary);
-        }
-
-        .card-title {
-            font-size: 1.15rem;
-            font-weight: 700;
-            color: var(--text-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
         }
 
         .qna-input-bar {
-            padding: var(--space-xl);
+            padding: 1.5rem;
             background: var(--bg-secondary);
-            border-top: 1px solid var(--border-soft);
+            border: 1px solid var(--border-soft);
+            border-radius: var(--radius-xl);
             display: flex;
             gap: 1rem;
+            margin-top: 1.5rem;
+            box-shadow: var(--shadow-lg);
         }
 
         .qna-input-wrapper {
@@ -181,7 +173,7 @@
 
         .qna-input-wrapper input {
             width: 100%;
-            padding: 1.2rem 1.5rem;
+            padding: 1rem 1.5rem;
             padding-right: 4rem;
             border-radius: var(--radius-pill);
             border: 2px solid var(--border-soft);
@@ -191,12 +183,7 @@
             transition: all 0.3s ease;
         }
 
-        .qna-input-wrapper input:focus {
-            border-color: var(--text-primary);
-            box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05);
-        }
-
-        /* QnA Autocomplete */
+        /* QnA suggestions */
         .qna-suggestions {
             position: absolute;
             bottom: calc(100% + 8px);
@@ -208,155 +195,23 @@
             max-height: 240px;
             overflow-y: auto;
             z-index: 1000;
-            box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.12);
             display: none;
-            backdrop-filter: blur(10px);
+            box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.12);
         }
 
         .suggestion-item {
             padding: 0.75rem 1rem;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: all 0.2s;
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            cursor: pointer;
             border-bottom: 1px solid var(--border-soft);
         }
 
-        .suggestion-item:last-child {
-            border-bottom: none;
-        }
-
-        .suggestion-item:hover {
-            background: var(--bg-tertiary);
-            color: var(--accent-blue);
-        }
-
-        .suggestion-icon {
-            font-size: 0.8rem;
-            width: 20px;
-            text-align: center;
-            opacity: 0.7;
-        }
-
-        .suggestion-category {
-            font-size: 0.6rem;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-            color: var(--text-muted);
-            margin-left: auto;
-            font-weight: 700;
-        }
-
-        /* Attendance Styles */
         .attendance-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 1.5rem;
-        }
-
-        .attendance-card {
-            background: var(--bg-secondary);
-            padding: var(--space-xl);
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--border-soft);
-        }
-
-        .progress-bar {
-            height: 8px;
-            background: var(--bg-tertiary);
-            border-radius: 4px;
-            margin: 1rem 0;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: var(--text-primary);
-            border-radius: 4px;
-        }
-
-        /* General Card UI */
-        .card {
-            background: var(--bg-secondary);
-            border-radius: var(--radius-xl);
-            border: 1px solid var(--border-soft);
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: var(--space-xl);
-        }
-
-        .card-title {
-            font-family: var(--font-heading);
-            font-size: 1.25rem;
-            font-weight: 600;
-        }
-
-        .timetable-mini {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .timetable-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1.2rem;
-            background: var(--bg-primary);
-            border-radius: var(--radius-lg);
-            border: 1px solid transparent;
-            transition: all 0.3s ease;
-        }
-
-        .timetable-item:hover {
-            border-color: var(--border-color);
-            transform: scale(1.01);
-            background: var(--bg-secondary);
-        }
-
-        @media (max-width: 1100px) {
-            .sidebar {
-                display: none;
-            }
-
-            .main-wrapper {
-                margin-left: 0;
-            }
-
-            .dashboard-header,
-            .card-header {
-                flex-direction: column;
-                align-items: flex-start !important;
-            }
-
-            .header-actions,
-            .card-header>div:last-child {
-                width: 100%;
-                justify-content: space-between;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .sidebar {
-                display: none;
-            }
-
-            .main-wrapper {
-                margin-left: 0;
-            }
-
-            .main-content {
-                padding: var(--space-xl);
-            }
         }
 
         /* Prevent table data wrapping when space exists */
@@ -367,7 +222,51 @@
         #schedule-table-body td:nth-child(3),
         #schedule-table-body td:nth-child(4) {
             white-space: normal;
-            /* Allow subject and instructor to wrap if very long */
+        }
+
+        /* Mobile Polish */
+        @media (max-width: 1024px) {
+            body {
+                overflow-y: auto !important;
+                display: block;
+                /* Override flex for better natural scroll */
+            }
+
+            .sidebar {
+                transition: left 0.4s ease;
+            }
+
+            .main-wrapper {
+                margin-left: 0 !important;
+                height: auto;
+                min-height: 100vh;
+                overflow-y: visible;
+            }
+
+            .main-content {
+                padding: 1rem;
+                overflow-y: visible;
+            }
+
+            .dashboard-header {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                padding: 1rem !important;
+            }
+
+            .header-actions {
+                margin-top: 1rem;
+                justify-content: space-between !important;
+            }
+
+            .attendance-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .qna-input-bar {
+                flex-direction: column;
+                border-radius: var(--radius-lg);
+            }
         }
     </style>
 </head>
@@ -872,84 +771,153 @@
 
         // ==================== SMART QNA ====================
         function handleFullQnA(event) {
-            if (event.key === 'Enter') sendFullQnA();
+            if (event.key === 'Enter') {
+                sendFullQnA();
+                const suggestions = document.getElementById('qna-suggestions');
+                if (suggestions) suggestions.style.display = 'none';
+            }
         }
 
         async function sendFullQnA() {
             const input = document.getElementById('full-qna-input');
-            const query = input.value.trim();
-            if (!query) return;
+            const q = input.value.trim();
+            if (!q) return;
+
+            const welcome = document.getElementById('qna-welcome-screen');
+            if (welcome) welcome.remove();
 
             const chatArea = document.getElementById('full-chat-area');
 
-            // ➕ Add user message with HIGH VISIBILITY
+            // User message
             chatArea.innerHTML += `
-                <div class="message user" style="display:flex; justify-content:flex-end; margin-bottom:1.5rem; animation: slideIn 0.3s ease-out;">
-                    <div style="background:var(--accent-blue); color:#ffffff; padding:0.85rem 1.25rem; border-radius:18px 18px 2px 18px; max-width:80%; box-shadow:var(--shadow-md);">
-                        <p style="margin:0; font-size:0.9rem; font-weight:500; line-height:1.4;">${query}</p>
+                <div class="message user" style="align-self: flex-end; margin-left: 15%; margin-bottom: 0.75rem;">
+                    <div class="message-bubble" style="background:var(--accent-blue); color:#ffffff; padding:0.75rem 1rem; border-radius:14px; border-bottom-right-radius:2px; box-shadow:var(--shadow-sm);">
+                        <p style="margin:0; font-weight:500; font-size: 0.85rem;">${q}</p>
                     </div>
                 </div>
             `;
             input.value = '';
             chatArea.scrollTop = chatArea.scrollHeight;
 
-            // ⏳ Add typing indicator
-            const typingId = 'typing-' + Date.now();
+            // Typing indicator
+            const botMsgId = 'bot-' + Date.now();
             chatArea.innerHTML += `
-                <div class="message bot" id="${typingId}" style="display:flex; gap:1rem; margin-bottom:1.5rem;">
-                    <div style="background:var(--bg-secondary); padding:0.85rem 1.25rem; border-radius:18px 18px 18px 2px; max-width:80%; border:1px solid var(--border-soft);">
-                        <p style="margin:0; color:var(--text-muted); font-size:0.85rem;"><i class="fas fa-spinner fa-spin"></i> Assistant is checking records...</p>
+                <div class="message bot" id="${botMsgId}" style="margin-bottom: 0.75rem; display: flex; gap: 0.5rem; align-items: flex-start;">
+                    <div class="message-avatar" style="font-size: 0.9rem; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: var(--bg-tertiary); border-radius: 50%;">🤖</div>
+                    <div class="message-bubble" style="background:var(--bg-secondary); border:1px solid var(--border-soft); padding:0.75rem; border-radius:14px; border-bottom-left-radius:2px; flex: 1;">
+                        <p style="margin:0; font-size: 0.8rem; color: var(--text-secondary);"><i class="fas fa-circle-notch fa-spin"></i> Reasoning...</p>
                     </div>
                 </div>
             `;
             chatArea.scrollTop = chatArea.scrollHeight;
 
             try {
-                const res = await fetchWithAuth(`${API_BASE}/qna/ask`, {
+                const response = await fetchWithAuth(`${API_BASE}/qna/ask`, {
                     method: 'POST',
-                    body: JSON.stringify({ query: query })
+                    body: JSON.stringify({ query: q })
                 });
 
-                const typing = document.getElementById(typingId);
-                if (typing) typing.remove();
+                const data = await response.json();
+                const botMsg = document.getElementById(botMsgId);
 
-                if (res && res.ok) {
-                    const result = await res.json();
-                    const data = result.data || result;
-
-                    // 🤖 Bot Response Bubble
-                    chatArea.innerHTML += `
-                        <div class="message bot" style="display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1.5rem; animation: fadeIn 0.4s ease-in;">
-                            <div style="background:var(--bg-secondary); padding:1rem 1.25rem; border-radius:18px 18px 18px 2px; max-width:90%; border:1px solid var(--border-soft); box-shadow:var(--shadow-sm);">
-                                <div style="margin:0; line-height:1.6; font-size:0.9rem; color:var(--text-primary); white-space: pre-wrap;">${data.response || 'I don’t have enough verified information to answer this.'}</div>
-                                ${data.processing_time_ms ? `<p style="margin:0.75rem 0 0 0; font-size:0.65rem; color:var(--text-muted); opacity:0.8; text-align:right;">✓ Verified in ${data.processing_time_ms}ms</p>` : ''}
-                            </div>
-                        </div>
-                    `;
+                if (data.success) {
+                    botMsg.querySelector('.message-bubble').innerHTML = `<p style="line-height:1.5; color:var(--text-primary); text-align: left; font-size: 0.85rem; margin: 0; white-space: pre-wrap;">${data.data.response || data.response}</p>`;
                 } else {
-                    const errData = await res.json().catch(() => ({}));
-                    chatArea.innerHTML += `
-                        <div class="message bot" style="display:flex; gap:1rem; margin-bottom:1.5rem;">
-                            <div style="background:var(--bg-secondary); padding:0.85rem 1.25rem; border-radius:18px; border:1.5px solid #ef4444; max-width:85%;">
-                                <p style="margin:0; color:#ef4444; font-size:0.85rem; font-weight:600;">System Error: ${errData.message || 'I don’t have enough verified information to answer this.'}</p>
-                            </div>
-                        </div>
-                    `;
+                    botMsg.querySelector('.message-bubble').innerHTML = `<p style="color:#ef4444; font-size: 0.8rem; margin: 0;">${data.message || 'Error processing request.'}</p>`;
                 }
             } catch (err) {
-                console.error('QnA Error:', err);
-                const typing = document.getElementById(typingId);
-                if (typing) typing.remove();
-                chatArea.innerHTML += `
-                    <div class="message bot" style="display:flex; gap:1rem; margin-bottom:1.5rem;">
-                        <div style="background:var(--bg-secondary); padding:0.85rem 1.25rem; border-radius:18px; border:1.5px solid #ef4444;">
-                            <p style="margin:0; color:#ef4444; font-size:0.85rem; font-weight:600;">Connection lost. Re-check network.</p>
-                        </div>
-                    </div>
-                `;
+                const botMsg = document.getElementById(botMsgId);
+                if (botMsg) botMsg.querySelector('.message-bubble').innerHTML = `<p style="color:#ef4444; font-size: 0.8rem; margin: 0;">Connection failure. Please check your network.</p>`;
             }
             chatArea.scrollTop = chatArea.scrollHeight;
         }
+
+        function handleQnASuggestions() {
+            const input = document.getElementById('full-qna-input');
+            const suggestionsDiv = document.getElementById('qna-suggestions');
+            const rawQuery = input.value.trim();
+            const query = rawQuery.toLowerCase();
+            const words = rawQuery.split(/\s+/).filter(w => w.length > 0);
+
+            if (query.length < 2) {
+                if (suggestionsDiv) suggestionsDiv.style.display = 'none';
+                return;
+            }
+
+            // Extract unique values for suggestions from originalScheduleData
+            const instructors = [...new Set(originalScheduleData.filter(s => s.instructor_name).map(s => s.instructor_name))];
+            const subjects = [...new Set(originalScheduleData.filter(s => s.subject_name).map(s => s.subject_name))];
+            const rooms = [...new Set(originalScheduleData.filter(s => s.room_code).map(s => s.room_code))];
+            const classes = [...new Set(originalScheduleData.filter(s => s.class_code).map(s => s.class_code))];
+
+            const commonQueries = [
+                "Who is free right now?", "Which rooms are free now?", "What is my next class?",
+                "Which class is in S-507?", "Who teaches DBMS?", "Classes after lunch",
+                "Available faculty today", "Vacant labs this hour"
+            ];
+
+            let matches = [];
+            const isShort = words.length < 3;
+
+            const filterFn = (item) => {
+                const itemLow = item.toLowerCase();
+                if (isShort) return itemLow.startsWith(query) || itemLow.split(' ').some(w => w.startsWith(query));
+                return words.every(word => itemLow.includes(word.toLowerCase()));
+            };
+
+            const process = (list, category, icon, basePriority) => {
+                list.filter(filterFn).forEach(text => {
+                    matches.push({ text, category, icon, score: basePriority });
+                });
+            };
+
+            process(commonQueries, 'QUICK ACTION', 'fa-bolt', 1);
+            process(subjects, 'SUBJECT', 'fa-book', 1.5);
+            process(instructors, 'FACULTY', 'fa-user-tie', 2);
+            process(classes, 'CLASS', 'fa-users', 2.5);
+            process(rooms, 'ROOM', 'fa-door-open', 3);
+
+            matches.sort((a, b) => a.score - b.score);
+            const seen = new Set();
+            const filteredMatches = matches.filter(m => {
+                if (seen.has(m.text)) return false;
+                seen.add(m.text);
+                return true;
+            });
+
+            if (filteredMatches.length === 0) {
+                if (suggestionsDiv) suggestionsDiv.style.display = 'none';
+                return;
+            }
+
+            if (suggestionsDiv) {
+                suggestionsDiv.innerHTML = filteredMatches.slice(0, 7).map(m => `
+                    <div class="suggestion-item" onclick="selectQnASuggestion('${m.text}')" style="padding: 0.6rem 1rem; cursor: pointer; display: flex; align-items: center; gap: 0.75rem; border-bottom: 1px solid var(--border-soft); transition: background 0.2s;">
+                        <i class="fas ${m.icon}" style="font-size: 0.8rem; color: var(--text-muted); width: 14px;"></i>
+                        <span style="font-size: 0.8rem; color: var(--text-primary); flex: 1;">${m.text}</span>
+                        <span style="font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase;">${m.category}</span>
+                    </div>
+                `).join('');
+                suggestionsDiv.style.display = 'block';
+            }
+        }
+
+        function selectQnASuggestion(text) {
+            const input = document.getElementById('full-qna-input');
+            input.value = text;
+            const suggestionsDiv = document.getElementById('qna-suggestions');
+            if (suggestionsDiv) suggestionsDiv.style.display = 'none';
+            input.focus();
+        }
+
+        // Close suggestions on outside click
+        document.addEventListener('click', (e) => {
+            const suggestionsDiv = document.getElementById('qna-suggestions');
+            const input = document.getElementById('full-qna-input');
+            if (suggestionsDiv && input && !input.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+                suggestionsDiv.style.display = 'none';
+            }
+        });
 
         async function loadStatusSummaries() {
             try {
@@ -957,8 +925,8 @@
                 if (res && res.ok) {
                     const data = await res.json();
 
-                    originalFacultyData = data.faculty || [];
-                    originalRoomData = data.rooms || [];
+                    originalFacultyData = (data.faculty || []).sort((a, b) => a.name.localeCompare(b.name));
+                    originalRoomData = (data.rooms || []).sort((a, b) => a.code.localeCompare(b.code));
 
                     facultyData = [...originalFacultyData];
                     roomData = [...originalRoomData];
@@ -1087,201 +1055,11 @@
                 section.classList.remove('active');
             });
             const activeSection = document.getElementById('view-' + viewId);
-            activeSection.classList.add('active');
+            if (activeSection) activeSection.classList.add('active');
 
             if (viewId === 'faculty') loadFaculty();
             if (viewId === 'rooms') loadRooms();
-
-            // Update Header (Dynamic titles handle better than static)
-        }
-
-        function handleFullQnA(e) {
-            if (e.key === 'Enter') {
-                sendFullQnA();
-                document.getElementById('qna-suggestions').style.display = 'none';
-            }
-        }
-
-        function handleQnASuggestions() {
-            const input = document.getElementById('full-qna-input');
-            const suggestionsDiv = document.getElementById('qna-suggestions');
-            const rawQuery = input.value.trim();
-            const query = rawQuery.toLowerCase();
-            const words = rawQuery.split(/\s+/).filter(w => w.length > 0);
-
-            if (query.length < 2) {
-                suggestionsDiv.style.display = 'none';
-                return;
-            }
-
-            // Extract unique values for suggestions from originalScheduleData
-            const instructors = [...new Set(originalScheduleData.filter(s => s.instructor_name).map(s => s.instructor_name))];
-            const subjects = [...new Set(originalScheduleData.filter(s => s.subject_name).map(s => s.subject_name))];
-            const rooms = [...new Set(originalScheduleData.filter(s => s.room_code).map(s => s.room_code))];
-            const classes = [...new Set(originalScheduleData.filter(s => s.class_code).map(s => s.class_code))];
-
-            const commonQueries = [
-                // Faculty Availability
-                "Who is free right now?", "Which teachers are available now?", "Is any teacher free?",
-                "Who can take a substitute class?", "Which faculty is available from 12 to 1?",
-                "Teachers free this hour", "Faculty available today", "Any professor available now?",
-
-                // Room / Lab Availability
-                "Which rooms are free now?", "Which rooms are vacant right now?", "Is room S-404 vacant?",
-                "Is lab C-2 free now?", "Which labs are empty?", "Empty classrooms now",
-                "Available rooms today", "Vacant labs this hour",
-
-                // Current / Next Class
-                "Which class is going on now?", "What is my current class?", "What is my next class?",
-                "Next class today", "Which lecture is happening now?", "Who is teaching now?",
-                "What class do I have next?",
-
-                // Teacher-Centric
-                "My classes today", "My timetable for today", "My schedule now",
-                "Subjects I teach", "Classes I am handling today", "My next lecture",
-                "My free periods today",
-
-                // Student / Batch / Division
-                "Show TY IT timetable", "TY IT classes today", "SE CS schedule",
-                "Which class is in S-507?", "Who teaches TY IT DBMS?", "Which subject is in lab now?",
-
-                // Subject / Faculty Mapping
-                "Who teaches DBMS?", "Who teaches EM-IV?", "Faculty for Operating Systems",
-                "DBMS teacher name", "Which professor teaches CN?",
-
-                // Time-Based Queries
-                "From 12 to 1 free teachers", "Available from 2 to 3", "Free after 4 PM",
-                "Classes after lunch", "Morning lectures today",
-
-                // Short Natural Phrases (for Prediction)
-                "Who is", "Which rooms", "Which labs", "Is room", "Is lab",
-                "Is professor", "I want", "Show me", "What is my", "Do I have",
-
-                // Admin / Coordination
-                "Free faculty now", "Rooms available this period", "Substitute teacher needed",
-                "Unassigned classrooms", "Faculty without lecture now"
-            ];
-
-            let matches = [];
-            const isShort = words.length < 3;
-
-            // Multi-stage Filter Logic: Prefix vs Semantic Overlap
-            const filterFn = (item) => {
-                const itemLow = item.toLowerCase();
-                if (isShort) return itemLow.startsWith(query) || itemLow.split(' ').some(w => w.startsWith(query));
-                // Semantic strategy for 3+ words: ensure all query terms are present
-                return words.every(word => itemLow.includes(word.toLowerCase()));
-            };
-
-            // Rank by Priority (Popularity + Syllabus weight)
-            const process = (list, category, icon, basePriority) => {
-                list.filter(filterFn).forEach(text => {
-                    let score = basePriority;
-                    // Boost if Syllabus (Subject)
-                    if (category === 'SUBJECT') score -= 0.2;
-                    matches.push({ text, category, icon, score });
-                });
-            };
-
-            process(commonQueries, 'QUICK ACTION', 'fa-bolt', 1);
-            process(subjects, 'SUBJECT', 'fa-book', 1.5); // Syllabus Weight
-            process(instructors, 'FACULTY', 'fa-user-tie', 2);
-            process(classes, 'CLASS', 'fa-users', 2.5);
-            process(rooms, 'ROOM', 'fa-door-open', 3);
-
-            // Sort by score and limit to 5-7 results
-            matches.sort((a, b) => a.score - b.score);
-
-            // De-duplicate
-            const seen = new Set();
-            const filteredMatches = matches.filter(m => {
-                if (seen.has(m.text)) return false;
-                seen.add(m.text);
-                return true;
-            });
-
-            if (filteredMatches.length === 0) {
-                suggestionsDiv.style.display = 'none';
-                return;
-            }
-
-            suggestionsDiv.innerHTML = filteredMatches.slice(0, 7).map(m => `
-                <div class="suggestion-item" onclick="selectQnASuggestion('${m.text}')">
-                    <i class="fas ${m.icon} suggestion-icon"></i>
-                    <span>${m.text}</span>
-                    <span class="suggestion-category">${m.category}</span>
-                </div>
-            `).join('');
-
-            suggestionsDiv.style.display = 'block';
-        }
-
-        function selectQnASuggestion(text) {
-            const input = document.getElementById('full-qna-input');
-            input.value = text;
-            document.getElementById('qna-suggestions').style.display = 'none';
-            input.focus();
-        }
-
-        // Close suggestions on outside click
-        document.addEventListener('click', (e) => {
-            const suggestionsDiv = document.getElementById('qna-suggestions');
-            const input = document.getElementById('full-qna-input');
-            if (suggestionsDiv && !input.contains(e.target) && !suggestionsDiv.contains(e.target)) {
-                suggestionsDiv.style.display = 'none';
-            }
-        });
-
-        async function sendFullQnA() {
-            const input = document.getElementById('full-qna-input');
-            const q = input.value.trim();
-            if (!q) return;
-
-            const welcome = document.getElementById('qna-welcome-screen');
-            if (welcome) welcome.remove();
-
-            const chatArea = document.getElementById('full-chat-area');
-
-            // User message
-            chatArea.innerHTML += `
-                <div class="message user" style="align-self: flex-end; margin-left: 15%; margin-bottom: 0.75rem;">
-                    <div class="message-bubble" style="background:var(--bg-tertiary); padding:0.75rem; border-radius:10px; border-bottom-right-radius:2px; border: 1px solid var(--border-soft);">
-                        <p style="margin:0; font-weight:500; font-size: 0.8rem; color: var(--text-primary);">${q}</p>
-                    </div>
-                </div>
-            `;
-            input.value = '';
-            chatArea.scrollTop = chatArea.scrollHeight;
-
-            // Typing indicator
-            const botMsgId = 'bot-' + Date.now();
-            chatArea.innerHTML += `
-                <div class="message bot" id="${botMsgId}" style="margin-bottom: 0.75rem; display: flex; gap: 0.5rem; align-items: flex-start;">
-                    <div class="message-avatar" style="font-size: 0.9rem; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: var(--bg-tertiary); border-radius: 50%;">🧠</div>
-                    <div class="message-bubble" style="background:var(--bg-secondary); border:1px solid var(--border-soft); padding:0.75rem; border-radius:10px; border-bottom-left-radius:2px; flex: 1;">
-                        <p style="margin:0; font-size: 0.8rem; color: var(--text-secondary);"><i class="fas fa-circle-notch fa-spin"></i> Reasoning...</p>
-                    </div>
-                </div>
-            `;
-            chatArea.scrollTop = chatArea.scrollHeight;
-
-            try {
-                const response = await fetch(`${API_BASE}/qna/ask`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('campusiq_token')}` },
-                    body: JSON.stringify({ query: q })
-                });
-                const data = await response.json();
-                const botMsg = document.getElementById(botMsgId);
-                if (data.success) {
-                    botMsg.querySelector('.message-bubble').innerHTML = `<p style="line-height:1.5; color:var(--text-primary); text-align: left; font-size: 0.8rem; margin: 0;">${data.data.response}</p>`;
-                } else {
-                    botMsg.querySelector('.message-bubble').innerHTML = `<p style="color:#ef4444; font-size: 0.8rem; margin: 0;">${data.message || 'Error processing request.'}</p>`;
-                }
-            } catch (err) {
-                document.getElementById(botMsgId).querySelector('.message-bubble').innerHTML = `<p>Database connection error.</p>`;
-            }
-            chatArea.scrollTop = chatArea.scrollHeight;
+            if (viewId === 'schedules') applyScheduleFilters();
         }
 
         function toggleFullWeek() {
@@ -1318,8 +1096,6 @@
 
             scheduleData = originalScheduleData.filter(s => {
                 // Rule 1: Time/Day Scope
-                // If searching, we always show all days. 
-                // If NOT searching, we follow the isFullWeekView toggle.
                 const inScope = (query.length > 0) || isFullWeekView || (s.day_of_week === todayIdx);
                 if (!inScope) return false;
 
@@ -1375,8 +1151,10 @@
 
         function closeSidebarOnMobile() {
             if (window.innerWidth <= 1024) {
-                document.getElementById('main-sidebar').classList.remove('active');
-                document.getElementById('sidebar-overlay').classList.remove('active');
+                const sidebar = document.getElementById('main-sidebar');
+                const overlay = document.getElementById('sidebar-overlay');
+                if (sidebar) sidebar.classList.remove('active');
+                if (overlay) overlay.classList.remove('active');
             }
         }
 
