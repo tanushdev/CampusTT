@@ -200,7 +200,7 @@ class ScheduleService:
 
                 current_app.logger.info(f"Starting import of {len(rows)} rows for college {college_id}")
                 
-                params_list = []
+                all_params = []
                 for row_idx, row in enumerate(rows):
                     try:
                         # Safely handle None keys or non-string keys
@@ -240,11 +240,10 @@ class ScheduleService:
                             if not start or start == "00:00": missing.append("start")
                             if not end or end == "00:00": missing.append("end")
                             if not class_code: missing.append("group/class")
-                            msg = f"Row {row_idx + 1}: Missing {', '.join(missing)}"
-                            errors.append(msg)
+                            errors.append(f"Row {row_idx + 1}: Missing {', '.join(missing)}")
                             skipped += 1; continue
                         
-                        params_list.append({
+                        all_params.append({
                             "sid": uuid.uuid4(), "cid": cid_uuid, "class": str(class_code), "sub": str(subject or ''),
                             "inst": str(faculty or ''), "room": str(room or ''), "day": int(day), "start": str(start), "end": str(end),
                             "cby": uby_uuid, "now": now
@@ -253,21 +252,28 @@ class ScheduleService:
                         errors.append(f"Row {row_idx + 1}: {str(e)}")
                         skipped += 1
                 
-                if params_list:
-                    # Execute all inserts in one go (batch insert)
-                    conn.execute(text("""
-                        INSERT INTO schedules (
-                            schedule_id, college_id, class_code, subject_name, instructor_name, room_code, 
-                            day_of_week, start_time, end_time, created_by, created_at, updated_at
-                        ) VALUES (:sid, :cid, :class, :sub, :inst, :room, :day, :start, :end, :cby, :now, :now)
-                    """), params_list)
-                    imported = len(params_list)
+                # Process in smaller chunks to be safe with server timeouts
+                chunk_size = 200
+                for i in range(0, len(all_params), chunk_size):
+                    chunk = all_params[i:i + chunk_size]
+                    with db.engine.connect() as batch_conn:
+                        batch_trans = batch_conn.begin()
+                        try:
+                            batch_conn.execute(text("""
+                                INSERT INTO schedules (
+                                    schedule_id, college_id, class_code, subject_name, instructor_name, room_code, 
+                                    day_of_week, start_time, end_time, created_by, created_at, updated_at
+                                ) VALUES (:sid, :cid, :class, :sub, :inst, :room, :day, :start, :end, :cby, :now, :now)
+                            """), chunk)
+                            batch_trans.commit()
+                            imported += len(chunk)
+                            current_app.logger.info(f"Progress: {imported}/{len(all_params)} rows imported...")
+                        except Exception as e:
+                            batch_trans.rollback()
+                            errors.append(f"Batch {i//chunk_size + 1} failure: {str(e)}")
 
-                transaction.commit()
-                current_app.logger.info(f"Import complete: {imported} imported, {skipped} skipped")
                 return {'imported': imported, 'skipped': skipped, 'errors': errors}
             except Exception as e:
-                transaction.rollback()
                 return {'error': 'DATABASE', 'message': str(e)}
 
     def _normalize_time(self, time_str: str) -> str:
