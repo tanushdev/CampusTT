@@ -1120,6 +1120,31 @@
             }
         }
 
+        async function deleteAllSchedules() {
+            if (!confirm('⚠️ WARNING: This will delete ALL schedules in your timetable. This action cannot be undone. Are you sure?')) return;
+
+            const secondConfirm = confirm('Are you absolutely sure? This will clear your entire database of schedules.');
+            if (!secondConfirm) return;
+
+            notification('Deleting all schedules...', 'info');
+
+            try {
+                const res = await fetchWithAuth(`${API_BASE}/schedules/all`, {
+                    method: 'DELETE'
+                });
+                if (res && res.ok) {
+                    notification('All schedules deleted successfully', 'success');
+                    loadSchedules();
+                    loadDashboard();
+                } else {
+                    notification('Failed to delete all schedules', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                notification('Delete process failed', 'error');
+            }
+        }
+
         function toggleTheme() {
             const target = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', target);
