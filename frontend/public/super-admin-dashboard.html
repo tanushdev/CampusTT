@@ -687,7 +687,9 @@
 
     <!-- Scripts -->
     <script>
-        const API_BASE = 'http://localhost:5000/api/v1';
+        const API_BASE = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
+            ? 'http://localhost:5000/api/v1'
+            : '/api/v1';
 
         // ============================================
         // Auth & Navigation
