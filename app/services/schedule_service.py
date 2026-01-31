@@ -199,7 +199,8 @@ class ScheduleService:
                     return {'imported': 0, 'skipped': 0, 'errors': ["CSV has no data rows"]}
 
                 current_app.logger.info(f"Starting import of {len(rows)} rows for college {college_id}")
-
+                
+                params_list = []
                 for row_idx, row in enumerate(rows):
                     try:
                         # Safely handle None keys or non-string keys
@@ -240,27 +241,30 @@ class ScheduleService:
                             if not end or end == "00:00": missing.append("end")
                             if not class_code: missing.append("group/class")
                             msg = f"Row {row_idx + 1}: Missing {', '.join(missing)}"
-                            current_app.logger.warning(msg)
                             errors.append(msg)
                             skipped += 1; continue
                         
-                        res = conn.execute(text("""
-                            INSERT INTO schedules (
-                                schedule_id, college_id, class_code, subject_name, instructor_name, room_code, 
-                                day_of_week, start_time, end_time, created_by, created_at, updated_at
-                            ) VALUES (:sid, :cid, :class, :sub, :inst, :room, :day, :start, :end, :cby, :now, :now)
-                        """), {
+                        params_list.append({
                             "sid": uuid.uuid4(), "cid": cid_uuid, "class": str(class_code), "sub": str(subject or ''),
                             "inst": str(faculty or ''), "room": str(room or ''), "day": int(day), "start": str(start), "end": str(end),
                             "cby": uby_uuid, "now": now
                         })
-                        imported += 1
-                        if row_idx % 50 == 0:
-                            current_app.logger.info(f"Imported {imported} rows so far...")
                     except Exception as e:
                         errors.append(f"Row {row_idx + 1}: {str(e)}")
                         skipped += 1
+                
+                if params_list:
+                    # Execute all inserts in one go (batch insert)
+                    conn.execute(text("""
+                        INSERT INTO schedules (
+                            schedule_id, college_id, class_code, subject_name, instructor_name, room_code, 
+                            day_of_week, start_time, end_time, created_by, created_at, updated_at
+                        ) VALUES (:sid, :cid, :class, :sub, :inst, :room, :day, :start, :end, :cby, :now, :now)
+                    """), params_list)
+                    imported = len(params_list)
+
                 transaction.commit()
+                current_app.logger.info(f"Import complete: {imported} imported, {skipped} skipped")
                 return {'imported': imported, 'skipped': skipped, 'errors': errors}
             except Exception as e:
                 transaction.rollback()
