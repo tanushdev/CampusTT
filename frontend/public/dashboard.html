@@ -208,6 +208,27 @@
             border-bottom: 1px solid var(--border-soft);
         }
 
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-soft);
+        }
+
+        .mobile-menu-btn {
+            margin-right: 1rem;
+            border: none;
+            background: none;
+            font-size: 1.25rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: none;
+        }
+
         .attendance-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -276,18 +297,18 @@
     <!-- Sidebar -->
     <aside class="sidebar" id="main-sidebar">
         <div class="sidebar-brand">
-            <span class="brand-logo" style="font-size: 1.75rem;">
-                <div class="skeleton" style="width: 32px; height: 32px; border-radius: 8px;"></div>
-            </span>
-            <span class="brand-name" style="font-size: 1.25rem; font-weight: 700;">
-                <div class="skeleton" style="width: 120px; height: 20px; border-radius: 4px;"></div>
-            </span>
+            <span class="brand-logo" style="font-size: 1.75rem;">🎓</span>
+            <span class="brand-name" style="font-size: 1.25rem; font-weight: 700;">CampusIQ</span>
         </div>
 
         <nav class="sidebar-nav">
             <div class="nav-item active" onclick="showView('schedules'); closeSidebarOnMobile()">
                 <i class="fas fa-th-large"></i>
                 <span>Schedules</span>
+            </div>
+            <div class="nav-item" onclick="showView('attendance'); closeSidebarOnMobile()">
+                <i class="fas fa-check-double"></i>
+                <span>Attendance</span>
             </div>
             <div class="nav-item" onclick="showView('qna'); closeSidebarOnMobile()">
                 <i class="fas fa-magic"></i>
@@ -313,10 +334,8 @@
 
     <div class="main-wrapper">
         <main class="main-content">
-            <header class="dashboard-header"
-                style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: var(--bg-secondary); border-radius: 12px; margin-bottom: 1rem; border: 1px solid var(--border-soft);">
-                <button class="mobile-menu-btn show-mobile" onclick="toggleSidebar()"
-                    style="margin-right: 1rem; border: none; background: none; font-size: 1.25rem; color: var(--text-primary);">
+            <header class="dashboard-header">
+                <button class="mobile-menu-btn show-mobile" onclick="toggleSidebar()">
                     <i class="fas fa-bars"></i>
                 </button>
                 <div class="welcome-text">
@@ -363,12 +382,12 @@
             <!-- VIEW: Timetable -->
             <section id="view-schedules" class="view-section active">
                 <div class="card" style="height: 100%; display: flex; flex-direction: column;">
-                    <div class="card-header"
+                    <div class="card-header stack-mobile"
                         style="flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-soft);">
                         <div>
                             <h2 class="card-title">Today's Schedule</h2>
                         </div>
-                        <div style="display: flex; gap: 0.75rem; align-items: center;">
+                        <div class="stack-mobile" style="display: flex; gap: 0.75rem; align-items: center;">
                             <div id="my-schedule-toggle"
                                 style="display: none; align-items: center; gap: 0.5rem; background: var(--bg-secondary); padding: 0.35rem 0.75rem; border-radius: 6px; border: 1px solid var(--border-soft); cursor: pointer;"
                                 onclick="togglePersonalSchedule()">
@@ -385,7 +404,7 @@
                             </div>
                             <input type="text" id="schedule-search" placeholder="Search..." oninput="filterSchedules()"
                                 style="padding: 0.4rem 0.75rem; font-size: 0.75rem; border: 1px solid var(--border-soft); border-radius: 6px; width: 150px; background: var(--bg-primary); color: var(--text-primary); outline: none;">
-                            <span id="current-day-badge"
+                            <span id="current-day-badge" class="hide-mobile"
                                 style="background:var(--bg-tertiary); padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600;">Loading...</span>
                         </div>
                     </div>
@@ -412,23 +431,57 @@
                             </tbody>
                         </table>
                     </div>
-                    <div
+                    <div class="stack-mobile"
                         style="flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding-top: 0.5rem; border-top: 1px solid var(--border-soft); margin-top: 0.5rem;">
                         <span id="schedule-page-info" style="font-size: 0.7rem; color: var(--text-muted);"></span>
                         <div style="display: flex; gap: 0.5rem;">
-                            <button onclick="changeSchedulePage(-1)" id="prev-schedule"
-                                style="padding: 0.4rem 0.75rem; font-size: 0.7rem; border: 1px solid var(--border-soft); background: var(--bg-tertiary); color: var(--text-primary); border-radius: 6px; cursor: pointer; transition: all 0.2s;">←
+                            <button onclick="changeSchedulePage(-1)" id="prev-schedule" class="btn btn-sm btn-outline">←
                                 Prev</button>
                             <button onclick="changeSchedulePage(1)" id="next-schedule"
-                                style="padding: 0.4rem 0.75rem; font-size: 0.7rem; border: 1px solid var(--border-soft); background: var(--bg-tertiary); color: var(--text-primary); border-radius: 6px; cursor: pointer; transition: all 0.2s;">Next
-                                →</button>
+                                class="btn btn-sm btn-outline">Next →</button>
                         </div>
                     </div>
                 </div>
             </section>
 
+            <!-- VIEW: Attendance -->
+            <section id="view-attendance" class="view-section">
+                <div class="attendance-grid grid-responsive">
+                    <div class="card" style="padding: 1.5rem;">
+                        <h3 style="font-size: 0.9rem; margin-bottom: 1rem;">TODAY'S ATTENDANCE</h3>
+                        <div style="font-size: 2rem; font-weight: 800; color: var(--accent-blue);">84%</div>
+                        <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem;">Across all 12
+                            sessions</p>
+                    </div>
+                    <div class="card" style="padding: 1.5rem;">
+                        <h3 style="font-size: 0.9rem; margin-bottom: 1rem;">PENDING LOGS</h3>
+                        <div style="font-size: 2rem; font-weight: 800; color: var(--accent-orange);">03</div>
+                        <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem;">Requires faculty
+                            review</p>
+                    </div>
+                    <div class="card" style="padding: 1.5rem;">
+                        <h3 style="font-size: 0.9rem; margin-bottom: 1rem;">SYSTEM STATUS</h3>
+                        <div style="font-size: 1.25rem; font-weight: 800; color: #22c55e;">OPERATIONAL</div>
+                        <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem;">Biometric sync
+                            active</p>
+                    </div>
+                </div>
 
-            <!-- VIEW: Smart QnA -->
+                <div class="card"
+                    style="margin-top: 1.5rem; flex: 1; min-height: 300px; display: flex; flex-direction: column;">
+                    <div class="card-header stack-mobile"
+                        style="padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-soft);">
+                        <h2 class="card-title">Detailed Reports</h2>
+                        <button class="btn btn-dark btn-pill" style="font-size: 0.75rem;">EXPORT DATA</button>
+                    </div>
+                    <div style="padding: 3rem; text-align: center; color: var(--text-muted);">
+                        <i class="fas fa-chart-bar" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.2;"></i>
+                        <p>Select a date range to view detailed attendance analytics.</p>
+                    </div>
+                </div>
+            </section>
+
+
             <!-- VIEW: Smart QnA -->
             <section id="view-qna" class="view-section">
                 <div class="card"
@@ -473,7 +526,8 @@
                     <!-- Input Bar -->
                     <div
                         style="flex-shrink: 0; padding: 1rem; background: var(--bg-secondary); border-top: 1px solid var(--border-soft);">
-                        <div style="max-width: 800px; margin: 0 auto; display: flex; gap: 0.75rem; position: relative;">
+                        <div class="mobile-gap-1"
+                            style="max-width: 800px; margin: 0 auto; display: flex; gap: 0.75rem; position: relative;">
                             <div style="flex: 1; position: relative;">
                                 <input type="text" id="full-qna-input" placeholder="Ask anything..."
                                     onkeypress="handleFullQnA(event)" oninput="handleQnASuggestions()"
@@ -493,12 +547,12 @@
             <!-- VIEW: Rooms -->
             <section id="view-rooms" class="view-section">
                 <div class="card" style="height: 100%; display: flex; flex-direction: column;">
-                    <div class="card-header"
+                    <div class="card-header stack-mobile"
                         style="flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-soft);">
                         <div>
                             <h2 class="card-title">Rooms</h2>
                         </div>
-                        <div style="display: flex; gap: 0.75rem; align-items: center;">
+                        <div class="stack-mobile" style="display: flex; gap: 0.75rem; align-items: center;">
                             <input type="text" id="rooms-search" placeholder="Search..." oninput="filterRooms()"
                                 style="padding: 0.4rem 0.75rem; font-size: 0.75rem; border: 1px solid var(--border-soft); border-radius: 6px; width: 150px; background: var(--bg-primary); color: var(--text-primary); outline: none;">
                         </div>
@@ -519,15 +573,13 @@
                             </tbody>
                         </table>
                     </div>
-                    <div
+                    <div class="stack-mobile"
                         style="flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding-top: 0.5rem; border-top: 1px solid var(--border-soft); margin-top: 0.5rem;">
                         <span id="rooms-page-info" style="font-size: 0.7rem; color: var(--text-muted);"></span>
                         <div style="display: flex; gap: 0.5rem;">
-                            <button onclick="changeRoomsPage(-1)" id="prev-rooms"
-                                style="padding: 0.4rem 0.75rem; font-size: 0.7rem; border: 1px solid var(--border-soft); background: var(--bg-tertiary); color: var(--text-primary); border-radius: 6px; cursor: pointer; transition: all 0.2s;">←
+                            <button onclick="changeRoomsPage(-1)" id="prev-rooms" class="btn btn-sm btn-outline">←
                                 Prev</button>
-                            <button onclick="changeRoomsPage(1)" id="next-rooms"
-                                style="padding: 0.4rem 0.75rem; font-size: 0.7rem; border: 1px solid var(--border-soft); background: var(--bg-tertiary); color: var(--text-primary); border-radius: 6px; cursor: pointer; transition: all 0.2s;">Next
+                            <button onclick="changeRoomsPage(1)" id="next-rooms" class="btn btn-sm btn-outline">Next
                                 →</button>
                         </div>
                     </div>
@@ -537,12 +589,12 @@
             <!-- VIEW: Faculty -->
             <section id="view-faculty" class="view-section">
                 <div class="card" style="height: 100%; display: flex; flex-direction: column;">
-                    <div class="card-header"
+                    <div class="card-header stack-mobile"
                         style="flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-soft);">
                         <div>
                             <h2 class="card-title">Faculty</h2>
                         </div>
-                        <div style="display: flex; gap: 0.75rem; align-items: center;">
+                        <div class="stack-mobile" style="display: flex; gap: 0.75rem; align-items: center;">
                             <input type="text" id="faculty-search" placeholder="Search..." oninput="filterFaculty()"
                                 style="padding: 0.4rem 0.75rem; font-size: 0.75rem; border: 1px solid var(--border-soft); border-radius: 6px; width: 150px; background: var(--bg-primary); color: var(--text-primary); outline: none;">
                         </div>
@@ -563,15 +615,13 @@
                             </tbody>
                         </table>
                     </div>
-                    <div
+                    <div class="stack-mobile"
                         style="flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding-top: 0.5rem; border-top: 1px solid var(--border-soft); margin-top: 0.5rem;">
                         <span id="faculty-page-info" style="font-size: 0.7rem; color: var(--text-muted);"></span>
                         <div style="display: flex; gap: 0.5rem;">
-                            <button onclick="changeFacultyPage(-1)" id="prev-faculty"
-                                style="padding: 0.4rem 0.75rem; font-size: 0.7rem; border: 1px solid var(--border-soft); background: var(--bg-tertiary); color: var(--text-primary); border-radius: 6px; cursor: pointer; transition: all 0.2s;">←
+                            <button onclick="changeFacultyPage(-1)" id="prev-faculty" class="btn btn-sm btn-outline">←
                                 Prev</button>
-                            <button onclick="changeFacultyPage(1)" id="next-faculty"
-                                style="padding: 0.4rem 0.75rem; font-size: 0.7rem; border: 1px solid var(--border-soft); background: var(--bg-tertiary); color: var(--text-primary); border-radius: 6px; cursor: pointer; transition: all 0.2s;">Next
+                            <button onclick="changeFacultyPage(1)" id="next-faculty" class="btn btn-sm btn-outline">Next
                                 →</button>
                         </div>
                     </div>

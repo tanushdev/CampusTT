@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
@@ -419,6 +419,26 @@
                 transform: translateX(0);
             }
         }
+
+        .branding-preview {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2.5rem;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-lg);
+            border: 2px dashed var(--border-soft);
+            gap: 1.5rem;
+            margin-top: 1rem;
+            min-height: 200px;
+        }
+
+        @media (max-width: 768px) {
+            .branding-preview {
+                padding: 1.5rem;
+            }
+        }
     </style>
 </head>
 
@@ -547,7 +567,8 @@
             <!-- Branding Tab -->
             <div id="tab-branding" class="tab-pane">
                 <h2 style="font-family: var(--font-display); margin-bottom: var(--space-xl);">Branding Studio</h2>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2xl);">
+                <div class="grid-2 stack-mobile"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2xl);">
                     <div class="glass-panel">
                         <div class="form-group">
                             <label class="form-label">COLLEGE NAME</label>
@@ -570,7 +591,8 @@
                                 style="width: 80px; height: 80px; background: var(--bg-primary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 2rem;">
                                 🏫</div>
                             <div id="preview-name"
-                                style="font-family: var(--font-heading); font-weight: 700; font-size: 1.25rem;">Your
+                                style="font-family: var(--font-heading); font-weight: 700; font-size: 1.25rem; text-align: center;">
+                                Your
                                 College</div>
                         </div>
                         <p style="margin-top: 1rem; font-size: 0.75rem; color: var(--text-muted); text-align: center;">
@@ -581,7 +603,7 @@
 
             <!-- Users Tab -->
             <div id="tab-users" class="tab-pane">
-                <div
+                <div class="stack-mobile"
                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-xl);">
                     <h2 style="font-family: var(--font-display);">Personnel Management</h2>
                     <button class="btn btn-dark btn-pill" onclick="showModal('user-modal')">+ ADD MEMBER</button>
@@ -605,10 +627,10 @@
 
             <!-- Schedules Tab -->
             <div id="tab-schedules" class="tab-pane">
-                <div
+                <div class="stack-mobile"
                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-xl);">
                     <h2 style="font-family: var(--font-display);">Timetable Management</h2>
-                    <div style="display: flex; gap: var(--space-md);">
+                    <div class="stack-mobile" style="display: flex; gap: var(--space-md);">
                         <input type="file" id="csv-upload-input" accept=".csv" style="display: none;"
                             onchange="handleCsvUpload(this)">
                         <button class="btn btn-outline btn-pill"
@@ -675,8 +697,9 @@
 
         <!-- User Modal -->
         <div id="user-modal" class="modal"
-            style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center;">
-            <div class="glass-card" style="width: 100%; max-width: 450px; background: var(--bg-secondary);">
+            style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center; padding: 1rem;">
+            <div class="glass-card"
+                style="width: 100%; max-width: 450px; background: var(--bg-secondary); margin: auto;">
                 <h3 style="font-family: var(--font-display);">Add New Member</h3>
                 <div style="margin-top: 1.5rem;">
                     <div class="form-group">
@@ -694,7 +717,7 @@
                             <option value="STAFF">Staff</option>
                         </select>
                     </div>
-                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <div class="stack-mobile" style="display: flex; gap: 1rem; margin-top: 2rem;">
                         <button class="btn btn-dark btn-pill btn-block" onclick="addUser()">CREATE USER</button>
                         <button class="btn btn-outline btn-pill btn-block"
                             onclick="hideModal('user-modal')">CANCEL</button>
@@ -705,10 +728,12 @@
 
         <!-- Schedule Modal -->
         <div id="schedule-modal" class="modal"
-            style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center;">
-            <div class="glass-card" style="width: 100%; max-width: 500px; background: var(--bg-secondary);">
+            style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center; padding: 1rem; overflow-y: auto;">
+            <div class="glass-card"
+                style="width: 100%; max-width: 500px; background: var(--bg-secondary); margin: auto;">
                 <h3 style="font-family: var(--font-display);">Add Schedule Entry</h3>
-                <div style="margin-top: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="grid-responsive"
+                    style="margin-top: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div class="form-group" style="grid-column: span 2;">
                         <label class="form-label">SUBJECT NAME</label>
                         <input type="text" id="sch-subject" class="form-input">
@@ -746,7 +771,7 @@
                         <input type="text" id="sch-room" class="form-input">
                     </div>
                 </div>
-                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <div class="stack-mobile" style="display: flex; gap: 1rem; margin-top: 2rem;">
                     <button class="btn btn-dark btn-pill btn-block" onclick="addScheduleEntry()">SAVE ENTRY</button>
                     <button class="btn btn-outline btn-pill btn-block"
                         onclick="hideModal('schedule-modal')">CANCEL</button>

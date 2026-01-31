@@ -93,9 +93,20 @@
     padding: 0;
 }
 
+button,
+input,
+select,
+textarea {
+    font-family: var(--font-body);
+    font-size: inherit;
+    color: inherit;
+    outline: none;
+}
+
 html {
     scroll-behavior: smooth;
     font-size: 16px;
+    overflow-x: hidden;
 }
 
 body {
@@ -118,6 +129,46 @@ img {
     max-width: 100%;
     height: auto;
     display: block;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+h1,
+.hero-title {
+    font-family: var(--font-display);
+    font-weight: 400;
+}
+
+h2,
+h3,
+h4,
+.section-title,
+.card-title {
+    font-family: var(--font-heading);
+    font-weight: 600;
+}
+
+/* Base interactive elements */
+button,
+input,
+select,
+textarea {
+    font-family: var(--font-body);
+}
+
+.btn,
+.form-input,
+.nav-link,
+.stat-label {
+    font-family: var(--font-body);
 }
 
 ul {
@@ -343,6 +394,21 @@ h6 {
     width: 100%;
 }
 
+.btn-danger {
+    background: #ef4444;
+    color: #ffffff;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+.btn-sm {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.75rem;
+    border-radius: 6px;
+}
+
 .btn-google {
     width: 100%;
     padding: 0.75rem;
@@ -364,6 +430,56 @@ h6 {
 .btn-google img {
     width: 18px;
     height: 18px;
+}
+
+/* ============================================
+   FORMS & INPUTS
+   ============================================ */
+.form-group {
+    margin-bottom: var(--space-lg);
+}
+
+.form-label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.8rem 1.25rem;
+    background: var(--bg-tertiary);
+    border: 1.5px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    outline: none;
+    transition: all var(--transition-base);
+}
+
+.form-input:focus {
+    border-color: var(--text-muted);
+    background: var(--bg-secondary);
+    box-shadow: var(--shadow-sm);
+}
+
+.form-input::placeholder {
+    color: var(--text-light);
+    font-weight: 400;
+}
+
+select.form-input {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1rem;
+    padding-right: 2.5rem;
 }
 
 /* ============================================
@@ -1396,5 +1512,104 @@ h6 {
 
     .header-actions .user-profile-simple {
         display: flex !important;
+    }
+}
+
+/* Responsive Utility Classes */
+.stack-mobile {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.grid-responsive {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.hidden-mobile {
+    display: flex;
+}
+
+.show-mobile {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .stack-mobile {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        text-align: center;
+    }
+
+    .stack-mobile>* {
+        width: 100% !important;
+    }
+
+    .hide-mobile,
+    .hidden-mobile {
+        display: none !important;
+    }
+
+    .show-mobile {
+        display: flex !important;
+    }
+
+    .mobile-p-0 {
+        padding: 0 !important;
+    }
+
+    .mobile-gap-1 {
+        gap: 0.5rem !important;
+    }
+
+    /* Fixed Grid Overrides */
+    .grid-2,
+    .grid-3,
+    .grid-4 {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* Specific Dashboard Component Optimization */
+@media (max-width: 1024px) {
+
+    .view-section,
+    .tab-pane {
+        padding-bottom: 2rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .card-header,
+    .glass-panel-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.75rem !important;
+    }
+
+    .header-actions {
+        flex-wrap: wrap;
+        width: 100%;
+        justify-content: flex-start !important;
+    }
+}
+
+@media (max-width: 640px) {
+
+    .card,
+    .glass-card,
+    .glass-panel {
+        padding: 1rem !important;
+    }
+
+    .btn-pill,
+    .btn-block {
+        width: 100% !important;
     }
 }

@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
@@ -464,7 +464,7 @@
             </div>
 
             <div class="header-actions">
-                <div class="header-status-box">
+                <div class="header-status-box hide-mobile">
                     <div id="live-time"
                         style="font-size: 0.9rem; font-weight: 700; font-family: 'SF Mono', monospace; color: var(--text-primary);">
                     </div>
@@ -481,7 +481,7 @@
 
                 <div class="user-profile"
                     style="display: flex; align-items: center; gap: 0.75rem; padding: 0.4rem 0.75rem; background: var(--bg-primary); border-radius: 10px; border: 1px solid var(--border-soft);">
-                    <div style="text-align: right;">
+                    <div style="text-align: right;" class="hide-mobile">
                         <div id="user-display-name"
                             style="font-weight: 600; font-size: 0.8rem; color: var(--text-primary);">Super Admin</div>
                         <div id="user-role-badge" style="font-size: 0.65rem; color: var(--text-muted);">Root System
@@ -522,7 +522,7 @@
 
                 <div class="content-grid" style="display: grid; grid-template-columns: 1fr; gap: var(--space-xl);">
                     <div class="glass-panel">
-                        <div
+                        <div class="stack-mobile"
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-lg);">
                             <h3 style="font-family: var(--font-display); font-size: 1.25rem;">Recent Registrations</h3>
                             <button class="btn btn-pill btn-dark" style="font-size: 0.75rem;"
@@ -552,7 +552,7 @@
 
             <!-- Colleges Tab -->
             <div id="tab-colleges" class="tab-pane">
-                <div
+                <div class="stack-mobile"
                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-xl);">
                     <h2 style="font-family: var(--font-display);">College Management</h2>
                     <button class="btn btn-dark btn-pill" onclick="showModal('college-modal')">+ REGISTER NEW
@@ -577,10 +577,10 @@
 
             <!-- Users Tab -->
             <div id="tab-users" class="tab-pane">
-                <div
+                <div class="stack-mobile"
                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-xl);">
                     <h2 style="font-family: var(--font-display);">Global User Directory</h2>
-                    <div style="display: flex; gap: var(--space-md);">
+                    <div class="stack-mobile" style="display: flex; gap: var(--space-md);">
                         <input type="text" placeholder="Search users..." class="btn btn-pill"
                             style="border: 1px solid var(--border-soft); background: var(--bg-secondary); padding: 0.5rem 1rem;">
                     </div>
@@ -628,8 +628,8 @@
 
     <!-- Modals -->
     <div id="college-modal" class="modal"
-        style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center;">
-        <div class="glass-card" style="width: 100%; max-width: 500px; background: var(--bg-secondary);">
+        style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center; padding: 1rem;">
+        <div class="glass-card" style="width: 100%; max-width: 500px; background: var(--bg-secondary); margin: auto;">
             <h3 style="font-family: var(--font-display);">Register New College</h3>
             <div style="margin-top: 1.5rem;">
                 <label style="display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.5rem;">COLLEGE
@@ -649,7 +649,7 @@
                     style="width: 100%; border: 1px solid var(--border-soft); margin-bottom: 1.5rem; text-align: left; background: var(--bg-primary);"
                     placeholder="admin@college.com">
 
-                <div style="display: flex; gap: 1rem;">
+                <div class="stack-mobile" style="display: flex; gap: 1rem;">
                     <button class="btn btn-dark btn-pill btn-block" onclick="createCollege()">CREATE COLLEGE</button>
                     <button class="btn btn-outline btn-pill btn-block"
                         onclick="hideModal('college-modal')">CANCEL</button>
@@ -660,8 +660,8 @@
 
     <!-- User Management Modal -->
     <div id="user-modal" class="modal"
-        style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center;">
-        <div class="glass-card" style="width: 100%; max-width: 400px; background: var(--bg-secondary);">
+        style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center; padding: 1rem;">
+        <div class="glass-card" style="width: 100%; max-width: 400px; background: var(--bg-secondary); margin: auto;">
             <h3 style="font-family: var(--font-display);">Manage User Role</h3>
             <div style="margin-top: 1.5rem;">
                 <input type="hidden" id="manage-user-id">
@@ -685,7 +685,7 @@
                     <!-- Populated dynamically -->
                 </select>
 
-                <div style="display: flex; gap: 1rem;">
+                <div class="stack-mobile" style="display: flex; gap: 1rem;">
                     <button class="btn btn-dark btn-pill btn-block" onclick="updateUserRole()">SAVE</button>
                     <button class="btn btn-danger btn-pill btn-block" onclick="suspendUser()">SUSPEND</button>
                 </div>
