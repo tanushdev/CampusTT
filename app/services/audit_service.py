@@ -2,12 +2,12 @@
 CampusIQ - Audit Service
 Comprehensive audit logging for security and compliance
 """
-import sqlite3
 from datetime import datetime, timedelta
 from typing import Optional, Dict, List, Any
 from flask import current_app, g, request
 import uuid
 import json
+from sqlalchemy import text
 
 
 class AuditService:
@@ -34,13 +34,7 @@ class AuditService:
     SEVERITY_CRITICAL = 'CRITICAL'
     
     def __init__(self, db_path: str = None):
-        self.db_path = db_path or current_app.config.get('DATABASE_PATH', 'campusiq.db')
-    
-    def _get_connection(self):
-        """Get database connection"""
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        return conn
+        pass # Not needed for SQLAlchemy
     
     def _get_user_context(self) -> Dict:
         """Get current user context"""
@@ -119,48 +113,44 @@ class AuditService:
         if new_value and not isinstance(new_value, str):
             new_value = json.dumps(new_value, default=str)
         
-        conn = self._get_connection()
-        cursor = conn.cursor()
-        
-        try:
-            cursor.execute("""
-                INSERT INTO audit_logs (
-                    log_id, college_id, user_id, user_email, user_role,
-                    action_type, entity_type, entity_id, entity_name,
-                    old_value, new_value, change_summary,
-                    ip_address, user_agent, request_path, request_method,
-                    severity, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, [
-                str(uuid.uuid4()),
-                final_college,
-                final_user_id,
-                final_email,
-                final_role,
-                action_type,
-                entity_type,
-                entity_id,
-                entity_name,
-                old_value,
-                new_value,
-                change_summary,
-                req_info['ip_address'],
-                req_info['user_agent'],
-                req_info['request_path'],
-                req_info['request_method'],
-                severity,
-                datetime.utcnow().isoformat()
-            ])
-            conn.commit()
-            return True
-            
-        except Exception as e:
-            # Never fail the main operation due to audit logging
-            current_app.logger.error(f"Audit logging failed: {e}")
-            conn.rollback()
-            return False
-        finally:
-            conn.close()
+        db = current_app.extensions['sqlalchemy']
+        with db.engine.connect() as conn:
+            try:
+                conn.execute(text("""
+                    INSERT INTO audit_logs (
+                        log_id, college_id, user_id, user_email, user_role,
+                        action_type, entity_type, entity_id, entity_name,
+                        old_value, new_value, change_summary,
+                        ip_address, user_agent, request_path, request_method,
+                        severity, created_at
+                    ) VALUES (:lid, :cid, :uid, :uemail, :urole, :atype, :etype, :eid, :ename, :old, :new, :sum, :ip, :ua, :path, :meth, :sev, :now)
+                """), {
+                    "lid": str(uuid.uuid4()),
+                    "cid": final_college,
+                    "uid": final_user_id,
+                    "uemail": final_email,
+                    "urole": final_role,
+                    "atype": action_type,
+                    "etype": entity_type,
+                    "eid": entity_id,
+                    "ename": entity_name,
+                    "old": old_value,
+                    "new": new_value,
+                    "sum": change_summary,
+                    "ip": req_info['ip_address'],
+                    "ua": req_info['user_agent'],
+                    "path": req_info['request_path'],
+                    "meth": req_info['request_method'],
+                    "sev": severity,
+                    "now": datetime.utcnow().isoformat()
+                })
+                conn.commit()
+                return True
+            except Exception as e:
+                # Never fail the main operation due to audit logging
+                current_app.logger.error(f"Audit logging failed: {e}")
+                conn.rollback()
+                return False
     
     def log_login(self, 
                   user_id: str, 
@@ -238,62 +228,56 @@ class AuditService:
         if not user['role']:
             return {'error': 'UNAUTHORIZED', 'message': 'Authentication required'}
         
-        conn = self._get_connection()
-        cursor = conn.cursor()
-        
-        try:
-            # Base query with filters
-            query = """
-                SELECT log_id, college_id, user_id, user_email, user_role,
-                       action_type, entity_type, entity_id, entity_name,
-                       change_summary, ip_address, severity, created_at
-                FROM audit_logs
-                WHERE 1=1
-            """
-            params = []
+        db = current_app.extensions['sqlalchemy']
+        with db.engine.connect() as conn:
+            query_parts = ["WHERE 1=1"]
+            params = {}
             
             # Tenant filtering for College Admin
             if user['role'] == 'COLLEGE_ADMIN':
-                query += " AND college_id = ?"
-                params.append(user['college_id'])
+                query_parts.append("AND college_id = :cid")
+                params['cid'] = user['college_id']
             
             # Optional filters
             if action_filter:
-                query += " AND action_type = ?"
-                params.append(action_filter)
+                query_parts.append("AND action_type = :atype")
+                params['atype'] = action_filter
             
             if entity_filter:
-                query += " AND entity_type = ?"
-                params.append(entity_filter)
+                query_parts.append("AND entity_type = :etype")
+                params['etype'] = entity_filter
             
             if severity_filter:
-                query += " AND severity = ?"
-                params.append(severity_filter)
+                query_parts.append("AND severity = :sev")
+                params['sev'] = severity_filter
             
             if from_date:
-                query += " AND created_at >= ?"
-                params.append(from_date.isoformat())
+                query_parts.append("AND created_at >= :fdate")
+                params['fdate'] = from_date.isoformat()
             
             if to_date:
-                query += " AND created_at <= ?"
-                params.append(to_date.isoformat())
+                query_parts.append("AND created_at <= :tdate")
+                params['tdate'] = to_date.isoformat()
+            
+            filter_sql = " ".join(query_parts)
             
             # Count total
-            count_query = query.replace(
-                "SELECT log_id, college_id, user_id, user_email, user_role,\n"
-                "                       action_type, entity_type, entity_id, entity_name,\n"
-                "                       change_summary, ip_address, severity, created_at",
-                "SELECT COUNT(*)"
-            )
-            cursor.execute(count_query, params)
-            total = cursor.fetchone()[0]
+            count_query = f"SELECT COUNT(*) FROM audit_logs {filter_sql}"
+            count_res = conn.execute(text(count_query), params).fetchone()
+            total = count_res[0]
             
             # Add pagination
-            query += " ORDER BY created_at DESC LIMIT ? OFFSET ?"
-            params.extend([per_page, (page - 1) * per_page])
+            sql = f"""
+                SELECT log_id, college_id, user_id, user_email, user_role,
+                       action_type, entity_type, entity_id, entity_name,
+                       change_summary, ip_address, severity, created_at
+                FROM audit_logs {filter_sql}
+                ORDER BY created_at DESC LIMIT :limit OFFSET :offset
+            """
+            params.update({"limit": per_page, "offset": (page - 1) * per_page})
             
-            cursor.execute(query, params)
-            logs = [dict(row) for row in cursor.fetchall()]
+            res_items = conn.execute(text(sql), params)
+            logs = [dict(row._mapping) for row in res_items]
             
             return {
                 'items': logs,
@@ -303,8 +287,6 @@ class AuditService:
                 'pages': (total + per_page - 1) // per_page
             }
             
-        finally:
-            conn.close()
     
     def get_security_events(self,
                             from_date: datetime = None,
@@ -319,11 +301,9 @@ class AuditService:
         from_date = from_date or (datetime.utcnow() - timedelta(days=7))
         to_date = to_date or datetime.utcnow()
         
-        conn = self._get_connection()
-        cursor = conn.cursor()
-        
-        try:
-            cursor.execute("""
+        db = current_app.extensions['sqlalchemy']
+        with db.engine.connect() as conn:
+            sql = """
                 SELECT log_id, college_id, user_id, user_email, user_role,
                        action_type, entity_type, entity_name, change_summary,
                        ip_address, user_agent, severity, created_at
@@ -332,17 +312,15 @@ class AuditService:
                        OR action_type LIKE '%VIOLATION%'
                        OR action_type = 'LOGIN_FAILED'
                        OR severity IN ('WARNING', 'ERROR', 'CRITICAL'))
-                  AND created_at BETWEEN ? AND ?
+                  AND created_at BETWEEN :fdate AND :tdate
                 ORDER BY created_at DESC
-                LIMIT ?
-            """, [from_date.isoformat(), to_date.isoformat(), limit])
-            
-            events = [dict(row) for row in cursor.fetchall()]
+                LIMIT :limit
+            """
+            res = conn.execute(text(sql), {"fdate": from_date.isoformat(), "tdate": to_date.isoformat(), "limit": limit})
+            events = [dict(row._mapping) for row in res]
             
             return {'items': events, 'total': len(events)}
             
-        finally:
-            conn.close()
     
     def get_login_history(self, user_id: str, limit: int = 20) -> Dict:
         """Get login history for a user"""
@@ -353,25 +331,20 @@ class AuditService:
             if current_user['user_id'] != user_id:
                 return {'error': 'ACCESS_DENIED', 'message': 'You can only view your own login history'}
         
-        conn = self._get_connection()
-        cursor = conn.cursor()
-        
-        try:
-            cursor.execute("""
+        db = current_app.extensions['sqlalchemy']
+        with db.engine.connect() as conn:
+            sql = """
                 SELECT log_id, ip_address, user_agent, action_type, created_at
                 FROM audit_logs
-                WHERE user_id = ?
+                WHERE user_id = :uid
                   AND action_type IN ('LOGIN', 'LOGIN_FAILED', 'LOGOUT')
                 ORDER BY created_at DESC
-                LIMIT ?
-            """, [user_id, limit])
-            
-            history = [dict(row) for row in cursor.fetchall()]
+                LIMIT :limit
+            """
+            res = conn.execute(text(sql), {"uid": user_id, "limit": limit})
+            history = [dict(row._mapping) for row in res]
             
             return {'items': history, 'total': len(history)}
-            
-        finally:
-            conn.close()
 
 
 # Singleton instance for easy import
