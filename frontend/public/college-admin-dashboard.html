@@ -407,8 +407,9 @@
 </head>
 
 <body>
+    <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
     <!-- Sidebar -->
-    <aside class="dashboard-sidebar">
+    <aside class="dashboard-sidebar" id="main-sidebar">
         <div class="sidebar-brand">
             <span class="brand-logo" id="college-logo-emoji" style="font-size: 1.75rem;">🏫</span>
             <span class="brand-name" id="college-name-display" style="font-size: 1.25rem; font-weight: 700;">Your
@@ -440,6 +441,10 @@
     <!-- Main Content -->
     <main class="dashboard-main">
         <header class="dashboard-header">
+            <button class="mobile-menu-btn show-mobile" onclick="toggleSidebar()"
+                style="margin-right: 1rem; border: none; background: none; font-size: 1.25rem; color: var(--text-primary);">
+                <i class="fas fa-bars"></i>
+            </button>
             <div class="header-title-wrapper">
                 <h1 id="tab-title">Campus Administration</h1>
                 <p id="tab-subtitle" style="font-size: 0.75rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">

@@ -42,10 +42,13 @@
                     <i class="fas fa-sun" id="theme-icon-light"></i>
                     <i class="fas fa-moon" id="theme-icon-dark"></i>
                 </button>
-                <div class="action-divider" style="height: 20px;"></div>
-                <div id="auth-nav">
+                <div class="action-divider hidden-mobile" style="height: 20px;"></div>
+                <div id="auth-nav" class="hidden-mobile">
                     <button class="btn btn-dark btn-pill" onclick="showLoginModal()">Login</button>
                 </div>
+                <button class="menu-btn show-mobile" onclick="showLoginModal()" style="font-size: 1.25rem;">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
         </div>
     </nav>

@@ -373,8 +373,9 @@
 </head>
 
 <body>
+    <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
     <!-- Sidebar -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="main-sidebar">
         <div class="sidebar-brand">
             <span class="brand-logo" style="font-size: 1.75rem;">
                 <div class="skeleton" style="width: 32px; height: 32px; border-radius: 8px;"></div>
@@ -385,19 +386,19 @@
         </div>
 
         <nav class="sidebar-nav">
-            <div class="nav-item active" onclick="showView('schedules')">
+            <div class="nav-item active" onclick="showView('schedules'); closeSidebarOnMobile()">
                 <i class="fas fa-th-large"></i>
                 <span>Schedules</span>
             </div>
-            <div class="nav-item" onclick="showView('qna')">
+            <div class="nav-item" onclick="showView('qna'); closeSidebarOnMobile()">
                 <i class="fas fa-magic"></i>
                 <span>Smart QnA</span>
             </div>
-            <div class="nav-item" onclick="showView('rooms')">
+            <div class="nav-item" onclick="showView('rooms'); closeSidebarOnMobile()">
                 <i class="fas fa-building"></i>
                 <span>Rooms</span>
             </div>
-            <div class="nav-item" onclick="showView('faculty')">
+            <div class="nav-item" onclick="showView('faculty'); closeSidebarOnMobile()">
                 <i class="fas fa-user-tie"></i>
                 <span>Faculty</span>
             </div>
@@ -415,6 +416,10 @@
         <main class="main-content">
             <header class="dashboard-header"
                 style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: var(--bg-secondary); border-radius: 12px; margin-bottom: 1rem; border: 1px solid var(--border-soft);">
+                <button class="mobile-menu-btn show-mobile" onclick="toggleSidebar()"
+                    style="margin-right: 1rem; border: none; background: none; font-size: 1.25rem; color: var(--text-primary);">
+                    <i class="fas fa-bars"></i>
+                </button>
                 <div class="welcome-text">
                     <h1 id="view-title"
                         style="font-size: 1.4rem; font-weight: 800; margin: 0; color: var(--text-primary);">
@@ -1361,6 +1366,18 @@
             );
             currentFacultyPage = 1;
             loadFaculty();
+        }
+
+        function toggleSidebar() {
+            document.getElementById('main-sidebar').classList.toggle('active');
+            document.getElementById('sidebar-overlay').classList.toggle('active');
+        }
+
+        function closeSidebarOnMobile() {
+            if (window.innerWidth <= 1024) {
+                document.getElementById('main-sidebar').classList.remove('active');
+                document.getElementById('sidebar-overlay').classList.remove('active');
+            }
         }
 
         function logout() {
