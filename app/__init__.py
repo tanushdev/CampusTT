@@ -48,6 +48,12 @@ def _init_extensions(app):
         }
     })
     
+
+    # Database
+    from flask_sqlalchemy import SQLAlchemy
+    db = SQLAlchemy()
+    db.init_app(app)
+    
     # Rate Limiting
     limiter = Limiter(
         app=app,
