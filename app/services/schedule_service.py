@@ -181,6 +181,17 @@ class ScheduleService:
             
         imported, skipped, errors = 0, 0, []
         db = current_app.extensions['sqlalchemy']
+        
+        # Initialize progress
+        with db.engine.connect() as prog_conn:
+            prog_conn.execute(text("""
+                INSERT INTO import_progress (college_id, total_rows, processed_rows, status, message, updated_at)
+                VALUES (:cid, :total, 0, 'processing', 'Reading file...', NOW())
+                ON CONFLICT (college_id) DO UPDATE SET 
+                total_rows = EXCLUDED.total_rows, processed_rows = 0, status = 'processing', message = 'Reading file...', updated_at = NOW()
+            """), {"cid": uuid.UUID(str(college_id)), "total": 0})
+            prog_conn.commit()
+
         with db.engine.connect() as conn:
             transaction = conn.begin()
             try:
@@ -199,6 +210,12 @@ class ScheduleService:
                     return {'imported': 0, 'skipped': 0, 'errors': ["CSV has no data rows"]}
 
                 current_app.logger.info(f"Starting import of {len(rows)} rows for college {college_id}")
+                
+                # Update progress with actual total
+                with db.engine.connect() as prog_conn:
+                    prog_conn.execute(text("UPDATE import_progress SET total_rows = :total, message = 'Parsing rows...' WHERE college_id = :cid"), 
+                                    {"cid": cid_uuid, "total": len(rows)})
+                    prog_conn.commit()
                 
                 all_params = []
                 for row_idx, row in enumerate(rows):
@@ -267,14 +284,39 @@ class ScheduleService:
                             """), chunk)
                             batch_trans.commit()
                             imported += len(chunk)
+                            # Update live progress in DB
+                            with db.engine.connect() as prog_conn:
+                                prog_conn.execute(text("UPDATE import_progress SET processed_rows = :proc, message = :msg WHERE college_id = :cid"), 
+                                                {"cid": cid_uuid, "proc": imported, "msg": f"Imported {imported}/{len(all_params)} rows..."})
+                                prog_conn.commit()
                             current_app.logger.info(f"Progress: {imported}/{len(all_params)} rows imported...")
                         except Exception as e:
                             batch_trans.rollback()
                             errors.append(f"Batch {i//chunk_size + 1} failure: {str(e)}")
 
+                # Final progress update
+                with db.engine.connect() as prog_conn:
+                    prog_conn.execute(text("UPDATE import_progress SET status = 'idle', message = 'Complete', processed_rows = total_rows WHERE college_id = :cid"), 
+                                    {"cid": cid_uuid})
+                    prog_conn.commit()
+
                 return {'imported': imported, 'skipped': skipped, 'errors': errors}
             except Exception as e:
                 return {'error': 'DATABASE', 'message': str(e)}
+
+    def get_import_progress(self, college_id: str) -> Dict:
+        db = current_app.extensions['sqlalchemy']
+        with db.engine.connect() as conn:
+            res = conn.execute(text("SELECT total_rows, processed_rows, status, message FROM import_progress WHERE college_id = :cid"), 
+                             {"cid": uuid.UUID(str(college_id))}).fetchone()
+            if not res:
+                return {'status': 'idle', 'total': 0, 'processed': 0}
+            return {
+                'total': res[0],
+                'processed': res[1],
+                'status': res[2],
+                'message': res[3]
+            }
 
     def _normalize_time(self, time_str: str) -> str:
         if not time_str: return "00:00"

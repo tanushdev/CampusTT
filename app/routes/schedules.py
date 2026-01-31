@@ -9,7 +9,19 @@ from ..middleware.tenant_middleware import require_tenant_access, get_tenant_col
 from ..services import ScheduleService
 from ..utils.exceptions import ValidationException, NotFoundException, ScheduleConflictException
 
-schedules_bp = Blueprint('schedules', __name__)
+@schedules_bp.route('/import/status', methods=['GET'])
+@require_auth
+@require_tenant_access
+def get_import_status():
+    """Get live status of CSV import"""
+    college_id = get_tenant_college_id()
+    service = ScheduleService()
+    result = service.get_import_progress(college_id)
+    return jsonify({
+        'success': True,
+        'data': result
+    })
+
 
 
 @schedules_bp.route('/', methods=['GET'])

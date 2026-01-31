@@ -1030,18 +1030,46 @@
             xhr.setRequestHeader('Authorization', `Bearer ${token}`);
             if (viewAs) xhr.setRequestHeader('X-Tenant-ID', viewAs);
 
+            let statusCheckInterval = null;
+
             xhr.upload.onprogress = (e) => {
                 if (e.lengthComputable) {
                     const percent = Math.round((e.loaded / e.total) * 100);
                     if (progressBar) progressBar.style.width = percent + '%';
-                    if (progressText) progressText.textContent = percent + '%';
+                    if (progressText) progressText.textContent = 'Uploading ' + percent + '%';
+
                     if (percent === 100) {
-                        notification('File sent! Server is processing...', 'info');
+                        notification('File sent! Waiting for database processing...', 'info');
+                        // Start polling for processing progress
+                        statusCheckInterval = setInterval(async () => {
+                            try {
+                                const sRes = await fetch(`${API_BASE}/schedules/import/status`, {
+                                    headers: headers
+                                });
+                                const sData = await sRes.json();
+                                if (sData.success && sData.data.status === 'processing') {
+                                    const proc = sData.data.processed;
+                                    const total = sData.data.total;
+                                    const msg = sData.data.message || 'Processing...';
+
+                                    if (total > 0) {
+                                        const procPercent = Math.min(100, Math.round((proc / total) * 100));
+                                        if (progressBar) progressBar.style.width = procPercent + '%';
+                                        if (progressText) progressText.textContent = `Processing: ${proc}/${total} rows`;
+                                    } else {
+                                        if (progressText) progressText.textContent = msg;
+                                    }
+                                }
+                            } catch (e) {
+                                console.warn('Status poll failed', e);
+                            }
+                        }, 1500);
                     }
                 }
             };
 
             xhr.onload = async () => {
+                if (statusCheckInterval) clearInterval(statusCheckInterval);
                 if (progressContainer) progressContainer.style.display = 'none';
 
                 try {

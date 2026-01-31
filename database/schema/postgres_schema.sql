@@ -404,6 +404,15 @@ CREATE INDEX idx_schedules_day_time ON schedules (day_of_week, start_time);
 
 CREATE INDEX idx_schedules_day_of_week ON schedules (day_of_week);
 
+CREATE TABLE IF NOT EXISTS import_progress (
+    college_id UUID PRIMARY KEY,
+    total_rows INTEGER DEFAULT 0,
+    processed_rows INTEGER DEFAULT 0,
+    status VARCHAR(20) DEFAULT 'idle',
+    message TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX idx_schedules_class_code ON schedules (class_code);
 
 CREATE INDEX idx_schedules_instructor_name ON schedules (instructor_name);
