@@ -92,10 +92,20 @@ class ProductionConfig(Config):
     DEBUG = False
     SQLALCHEMY_ECHO = False
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    
+    # Handle Vercel/Render Postgres connection strings
     if SQLALCHEMY_DATABASE_URI and SQLALCHEMY_DATABASE_URI.startswith('postgres://'):
         SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace('postgres://', 'postgresql://', 1)
+    
+    # Check for explicit SQLite usage in production (e.g. for testing deploy)
+    USE_SQLITE = os.environ.get('USE_SQLITE', 'false').lower() == 'true'
+    if USE_SQLITE:
+        SQLALCHEMY_DATABASE_URI = 'sqlite:///campusiq.db'
+    
+    # Fallback to prevent startup crash if no DB is configured
     if not SQLALCHEMY_DATABASE_URI:
-        SQLALCHEMY_DATABASE_URI = Config.SQLALCHEMY_DATABASE_URI
+        # Log warning here in real app
+        SQLALCHEMY_DATABASE_URI = 'sqlite:///campusiq.db'
     
     # Stricter security for production
     SESSION_COOKIE_SECURE = True
