@@ -598,6 +598,20 @@
                     </div>
                 </div>
 
+                <div id="upload-progress-container"
+                    style="display: none; margin-bottom: var(--space-lg); padding: 1rem; background: var(--bg-tertiary); border-radius: var(--radius-md);">
+                    <div
+                        style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.875rem;">
+                        <span style="font-weight: 600; color: var(--text-primary);">Processing File...</span>
+                        <span id="upload-percentage" style="color: var(--brand-primary); font-weight: 700;">0%</span>
+                    </div>
+                    <div style="height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+                        <div id="upload-progress-bar"
+                            style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--brand-primary), var(--brand-secondary)); transition: width 0.2s ease;">
+                        </div>
+                    </div>
+                </div>
+
                 <div class="glass-card"
                     style="margin-bottom: var(--space-xl); border-style: dashed; text-align: center; cursor: pointer;"
                     onclick="document.getElementById('csv-upload-input').click()">
@@ -999,44 +1013,68 @@
             const token = await getAuthToken();
             const viewAs = localStorage.getItem('campusiq_view_as_college');
 
-            notification('Uploading schedules...', 'info');
+            const progressContainer = document.getElementById('upload-progress-container');
+            const progressBar = document.getElementById('upload-progress-bar');
+            const progressText = document.getElementById('upload-percentage');
 
-            // IMPORTANT: Do NOT set Content-Type header when sending FormData
-            const headers = { 'Authorization': `Bearer ${token}` };
-            if (viewAs) headers['X-Tenant-ID'] = viewAs;
-
-            try {
-                const res = await fetch(`${API_BASE}/schedules/import`, {
-                    method: 'POST',
-                    headers: headers,
-                    body: formData
-                });
-
-                const result = await res.json();
-                if (res.ok && result.success) {
-                    let msg = `Success! Imported ${result.data.imported} entries.`;
-                    if (result.data.skipped > 0) {
-                        msg += ` ${result.data.skipped} rows skipped.`;
-                        console.warn('Import skipped rows:', result.data.errors);
-                    }
-                    notification(msg, result.data.skipped > 0 ? 'warning' : 'success');
-                    if (result.data.errors && result.data.errors.length > 0) {
-                        // Show first 3 errors to user
-                        const topErrors = result.data.errors.slice(0, 3).join('\n');
-                        alert('Import completed with some issues:\n' + topErrors + (result.data.errors.length > 3 ? '\n...' : ''));
-                    }
-                    loadSchedules();
-                    loadDashboard();
-                } else {
-                    const errorMsg = result.message || (result.details && result.details.join(', ')) || 'Check CSV format';
-                    notification('Import failed: ' + errorMsg, 'error');
-                }
-            } catch (e) {
-                console.error('Upload Error:', e);
-                notification('Upload process failed', 'error');
+            if (progressContainer) {
+                progressContainer.style.display = 'block';
+                progressBar.style.width = '0%';
+                progressText.textContent = '0%';
             }
-            input.value = ''; // Reset
-            input.parentElement.querySelector('.form-label')?.textContent ? null : null; // No-op
+
+            notification('Starting upload...', 'info');
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', `${API_BASE}/schedules/import`, true);
+            xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+            if (viewAs) xhr.setRequestHeader('X-Tenant-ID', viewAs);
+
+            xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable) {
+                    const percent = Math.round((e.loaded / e.total) * 100);
+                    if (progressBar) progressBar.style.width = percent + '%';
+                    if (progressText) progressText.textContent = percent + '%';
+                    if (percent === 100) {
+                        notification('File sent! Server is processing...', 'info');
+                    }
+                }
+            };
+
+            xhr.onload = async () => {
+                if (progressContainer) progressContainer.style.display = 'none';
+
+                try {
+                    const result = JSON.parse(xhr.responseText);
+                    if (xhr.status >= 200 && xhr.status < 300 && result.success) {
+                        let msg = `Success! Imported ${result.data.imported} entries.`;
+                        if (result.data.skipped > 0) {
+                            msg += ` ${result.data.skipped} rows skipped.`;
+                        }
+                        notification(msg, result.data.skipped > 0 ? 'warning' : 'success');
+                        if (result.data.errors && result.data.errors.length > 0) {
+                            const topErrors = result.data.errors.slice(0, 3).join('\n');
+                            alert('Import issue:\n' + topErrors + (result.data.errors.length > 3 ? '\n...' : ''));
+                        }
+                        loadSchedules();
+                        loadDashboard();
+                    } else {
+                        const errorMsg = result.message || (result.details && result.details.join(', ')) || 'Check CSV format';
+                        notification('Import failed: ' + errorMsg, 'error');
+                    }
+                } catch (e) {
+                    notification('Server error during processing', 'error');
+                }
+                input.value = '';
+            };
+
+            xhr.onerror = () => {
+                if (progressContainer) progressContainer.style.display = 'none';
+                notification('Upload process failed', 'error');
+                input.value = '';
+            };
+
+            xhr.send(formData);
         }
 
         async function deleteSchedule(id) {

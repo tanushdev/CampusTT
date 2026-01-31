@@ -397,6 +397,10 @@ CREATE TABLE IF NOT EXISTS schedules (
 );
 
 CREATE INDEX idx_schedules_college_id ON schedules (college_id);
+CREATE INDEX idx_schedules_class_code ON schedules (class_code);
+CREATE INDEX idx_schedules_instructor ON schedules (instructor_name);
+CREATE INDEX idx_schedules_room_code ON schedules (room_code);
+CREATE INDEX idx_schedules_day_time ON schedules (day_of_week, start_time);
 
 CREATE INDEX idx_schedules_day_of_week ON schedules (day_of_week);
 
