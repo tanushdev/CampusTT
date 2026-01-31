@@ -197,8 +197,18 @@ class ScheduleService:
         imported, skipped, errors = 0, 0, []
         db = current_app.extensions['sqlalchemy']
         
-        # Initialize progress
+        # Initialize progress (Auto-create table if missing)
         with db.engine.connect() as prog_conn:
+            prog_conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS import_progress (
+                    college_id UUID PRIMARY KEY,
+                    total_rows INTEGER DEFAULT 0,
+                    processed_rows INTEGER DEFAULT 0,
+                    status VARCHAR(20) DEFAULT 'idle',
+                    message TEXT,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
             prog_conn.execute(text("""
                 INSERT INTO import_progress (college_id, total_rows, processed_rows, status, message, updated_at)
                 VALUES (:cid, :total, 0, 'processing', 'Reading file...', NOW())
