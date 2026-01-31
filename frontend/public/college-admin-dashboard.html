@@ -1014,11 +1014,22 @@
 
                 const result = await res.json();
                 if (res.ok && result.success) {
-                    notification(`Success! Imported ${result.data.imported} entries.`, 'success');
+                    let msg = `Success! Imported ${result.data.imported} entries.`;
+                    if (result.data.skipped > 0) {
+                        msg += ` ${result.data.skipped} rows skipped.`;
+                        console.warn('Import skipped rows:', result.data.errors);
+                    }
+                    notification(msg, result.data.skipped > 0 ? 'warning' : 'success');
+                    if (result.data.errors && result.data.errors.length > 0) {
+                        // Show first 3 errors to user
+                        const topErrors = result.data.errors.slice(0, 3).join('\n');
+                        alert('Import completed with some issues:\n' + topErrors + (result.data.errors.length > 3 ? '\n...' : ''));
+                    }
                     loadSchedules();
                     loadDashboard();
                 } else {
-                    notification('Import failed: ' + (result.message || result.details || 'Check CSV format'), 'error');
+                    const errorMsg = result.message || (result.details && result.details.join(', ')) || 'Check CSV format';
+                    notification('Import failed: ' + errorMsg, 'error');
                 }
             } catch (e) {
                 console.error('Upload Error:', e);
