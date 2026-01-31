@@ -74,7 +74,8 @@ def google_callback():
         session.pop('oauth_state', None)
         
         # For web-based frontend, redirect with tokens to root
-        frontend_url = current_app.config.get('FRONTEND_URL', 'http://localhost:3000')
+        # Fallback to current host if FRONTEND_URL is not set
+        frontend_url = current_app.config.get('FRONTEND_URL') or request.host_url.rstrip('/')
         return redirect(
             f"{frontend_url}/?"
             f"access_token={result['access_token']}&"
@@ -83,7 +84,7 @@ def google_callback():
         )
         
     except CollegeNotApprovedException as e:
-        frontend_url = current_app.config.get('FRONTEND_URL', 'http://localhost:3000')
+        frontend_url = current_app.config.get('FRONTEND_URL') or request.host_url.rstrip('/')
         return redirect(f"{frontend_url}/?error={str(e)}")
     except Exception as e:
         import traceback

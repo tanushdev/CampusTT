@@ -48,6 +48,9 @@ class Config:
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
     
+    # Frontend URL for redirects
+    FRONTEND_URL = os.environ.get('FRONTEND_URL', '').rstrip('/')
+    
     # QnA Configuration
     QNA_MAX_QUERY_LENGTH = 500
     QNA_RESPONSE_CACHE_TTL = 300  # 5 minutes
