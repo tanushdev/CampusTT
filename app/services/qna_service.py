@@ -147,8 +147,12 @@ class QnAService:
         else: results = self._semantic_filter(self._get_timetable_data(college_id), query, entities, user_name)
         
         return {
-            'intent': entities['intent'], 'response': self._generate_ai_response(query, results, user_name),
-            'results': results[:5], 'processing_time_ms': int((datetime.now() - start).total_seconds() * 1000)
+            'intent': entities['intent'], 
+            'response': self._generate_ai_response(query, results, user_name),
+            'response_type': 'text',
+            'results': results[:5], 
+            'suggestions': [],
+            'processing_time_ms': int((datetime.now() - start).total_seconds() * 1000)
         }
 
     def _handle_free_rooms(self, college_id, entities):
