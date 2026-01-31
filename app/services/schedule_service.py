@@ -197,9 +197,9 @@ class ScheduleService:
         imported, skipped, errors = 0, 0, []
         db = current_app.extensions['sqlalchemy']
         
-        # Initialize progress (Auto-create table if missing)
-        with db.engine.connect() as prog_conn:
-            prog_conn.execute(text("""
+        with db.engine.connect() as conn:
+            # phase 1: Ensure table and init progress
+            conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS import_progress (
                     college_id UUID PRIMARY KEY,
                     total_rows INTEGER DEFAULT 0,
@@ -209,38 +209,35 @@ class ScheduleService:
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """))
-            prog_conn.execute(text("""
+            conn.execute(text("""
                 INSERT INTO import_progress (college_id, total_rows, processed_rows, status, message, updated_at)
-                VALUES (:cid, :total, 0, 'processing', 'Reading file...', NOW())
+                VALUES (:cid, 0, 0, 'processing', 'Reading file...', NOW())
                 ON CONFLICT (college_id) DO UPDATE SET 
-                total_rows = EXCLUDED.total_rows, processed_rows = 0, status = 'processing', message = 'Reading file...', updated_at = NOW()
-            """), {"cid": uuid.UUID(str(college_id)), "total": 0})
-            prog_conn.commit()
+                total_rows = 0, processed_rows = 0, status = 'processing', message = 'Reading file...', updated_at = NOW()
+            """), {"cid": uuid.UUID(str(college_id))})
+            conn.commit()
 
-        with db.engine.connect() as conn:
-            transaction = conn.begin()
             try:
                 cid_uuid = uuid.UUID(str(college_id))
                 uby_uuid = uuid.UUID(str(imported_by))
                 now = datetime.utcnow()
                 
-                # Log detected columns for debugging
+                # phase 2: Load rows
                 first_row = next(reader, None)
                 if first_row:
+                    # Log detected columns for debugging
                     keys = [str(k).lower().strip().replace(' ', '_') for k in first_row.keys() if k]
                     current_app.logger.info(f"CSV Headers detected: {keys}")
-                    # Put it back
                     rows = [first_row] + list(reader)
                 else:
                     return {'imported': 0, 'skipped': 0, 'errors': ["CSV has no data rows"]}
 
                 current_app.logger.info(f"Starting import of {len(rows)} rows for college {college_id}")
-                
-                # Update progress with actual total
-                with db.engine.connect() as prog_conn:
-                    prog_conn.execute(text("UPDATE import_progress SET total_rows = :total, message = 'Parsing rows...' WHERE college_id = :cid"), 
-                                    {"cid": cid_uuid, "total": len(rows)})
-                    prog_conn.commit()
+
+                # Update total
+                conn.execute(text("UPDATE import_progress SET total_rows = :total, message = 'Processing data...' WHERE college_id = :cid"), 
+                                {"cid": cid_uuid, "total": len(rows)})
+                conn.commit()
                 
                 all_params = []
                 for row_idx, row in enumerate(rows):
@@ -294,39 +291,44 @@ class ScheduleService:
                         errors.append(f"Row {row_idx + 1}: {str(e)}")
                         skipped += 1
                 
-                # Process in smaller chunks to be safe with server timeouts
-                chunk_size = 200
+                # phase 3: Batch Insert
+                chunk_size = 500
                 for i in range(0, len(all_params), chunk_size):
                     chunk = all_params[i:i + chunk_size]
-                    with db.engine.connect() as batch_conn:
-                        batch_trans = batch_conn.begin()
-                        try:
-                            batch_conn.execute(text("""
-                                INSERT INTO schedules (
-                                    schedule_id, college_id, class_code, subject_name, instructor_name, room_code, 
-                                    day_of_week, start_time, end_time, created_by, created_at, updated_at
-                                ) VALUES (:sid, :cid, :class, :sub, :inst, :room, :day, :start, :end, :cby, :now, :now)
-                            """), chunk)
-                            batch_trans.commit()
-                            imported += len(chunk)
-                            # Update live progress in DB
-                            with db.engine.connect() as prog_conn:
-                                prog_conn.execute(text("UPDATE import_progress SET processed_rows = :proc, message = :msg WHERE college_id = :cid"), 
-                                                {"cid": cid_uuid, "proc": imported, "msg": f"Imported {imported}/{len(all_params)} rows..."})
-                                prog_conn.commit()
-                            current_app.logger.info(f"Progress: {imported}/{len(all_params)} rows imported...")
-                        except Exception as e:
-                            batch_trans.rollback()
-                            errors.append(f"Batch {i//chunk_size + 1} failure: {str(e)}")
+                    batch_trans = conn.begin()
+                    try:
+                        conn.execute(text("""
+                            INSERT INTO schedules (
+                                schedule_id, college_id, class_code, subject_name, instructor_name, room_code, 
+                                day_of_week, start_time, end_time, created_by, created_at, updated_at
+                            ) VALUES (:sid, :cid, :class, :sub, :inst, :room, :day, :start, :end, :cby, :now, :now)
+                        """), chunk)
+                        batch_trans.commit()
+                        imported += len(chunk)
+                        
+                        # Update progress using same connection
+                        conn.execute(text("UPDATE import_progress SET processed_rows = :proc, message = :msg WHERE college_id = :cid"), 
+                                        {"cid": cid_uuid, "proc": imported, "msg": f"Saving {imported}/{len(all_params)}..."})
+                        conn.commit()
+                        current_app.logger.info(f"Progress: {imported}/{len(all_params)} rows imported...")
+                    except Exception as e:
+                        batch_trans.rollback()
+                        errors.append(f"Batch {i//chunk_size + 1} failure: {str(e)}")
 
-                # Final progress update
-                with db.engine.connect() as prog_conn:
-                    prog_conn.execute(text("UPDATE import_progress SET status = 'idle', message = 'Complete', processed_rows = total_rows WHERE college_id = :cid"), 
-                                    {"cid": cid_uuid})
-                    prog_conn.commit()
+                # phase 4: Cleanup
+                conn.execute(text("UPDATE import_progress SET status = 'idle', message = 'Complete!', processed_rows = total_rows WHERE college_id = :cid"), {"cid": cid_uuid})
+                conn.commit()
 
                 return {'imported': imported, 'skipped': skipped, 'errors': errors}
             except Exception as e:
+                current_app.logger.error(f"Import process failed for college {college_id}: {e}")
+                # Ensure progress status is updated even on failure
+                try:
+                    conn.execute(text("UPDATE import_progress SET status = 'failed', message = :msg WHERE college_id = :cid"), 
+                                 {"cid": cid_uuid, "msg": f"Import failed: {str(e)}"})
+                    conn.commit()
+                except Exception as update_e:
+                    current_app.logger.error(f"Failed to update import progress status after error: {update_e}")
                 return {'error': 'DATABASE', 'message': str(e)}
 
     def get_import_progress(self, college_id: str) -> Dict:
