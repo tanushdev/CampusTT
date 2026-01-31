@@ -1,121 +1,42 @@
 """
 CampusIQ - Audit Service
-Comprehensive audit logging for security and compliance
+Production service for security auditing and compliance tracking
 """
-from datetime import datetime, timedelta
-from typing import Optional, Dict, List, Any
-from flask import current_app, g, request
 import uuid
 import json
+from datetime import datetime
+from typing import Optional, Dict, List, Any
+from flask import current_app, request, g
 from sqlalchemy import text
 
 
 class AuditService:
-    """Service for audit logging and security trail"""
-    
-    # Action type constants
-    ACTION_LOGIN = 'LOGIN'
-    ACTION_LOGOUT = 'LOGOUT'
-    ACTION_LOGIN_FAILED = 'LOGIN_FAILED'
-    ACTION_CREATE = 'CREATE'
-    ACTION_READ = 'READ'
-    ACTION_UPDATE = 'UPDATE'
-    ACTION_DELETE = 'DELETE'
-    ACTION_APPROVE = 'APPROVE'
-    ACTION_SUSPEND = 'SUSPEND'
-    ACTION_SECURITY_VIOLATION = 'SECURITY_VIOLATION'
-    ACTION_CROSS_TENANT = 'CROSS_TENANT_VIOLATION'
-    
-    # Severity constants
-    SEVERITY_DEBUG = 'DEBUG'
-    SEVERITY_INFO = 'INFO'
-    SEVERITY_WARNING = 'WARNING'
-    SEVERITY_ERROR = 'ERROR'
-    SEVERITY_CRITICAL = 'CRITICAL'
+    """Service for system-wide auditing and security logging"""
     
     def __init__(self, db_path: str = None):
-        pass # Not needed for SQLAlchemy
-    
-    def _get_user_context(self) -> Dict:
-        """Get current user context"""
-        user = getattr(g, 'current_user', None)
-        if not user:
-            return {'role': None, 'user_id': None, 'college_id': None, 'email': None}
-        return user
-    
-    def _get_request_info(self) -> Dict:
-        """Extract request information"""
+        pass
+
+    def log(self, action_type: str, entity_type: str, entity_id: str = None,
+            entity_name: str = None, college_id: str = None, old_value: Any = None,
+            new_value: Any = None, change_summary: str = None, severity: str = 'INFO',
+            user_id: str = None, user_email: str = None, user_role: str = None) -> bool:
+        """Create a new audit log entry"""
         try:
-            return {
-                'ip_address': request.remote_addr or request.headers.get('X-Forwarded-For', ''),
-                'user_agent': request.headers.get('User-Agent', '')[:500],
-                'request_path': request.path,
-                'request_method': request.method
+            user_ctx = getattr(g, 'current_user', {})
+            final_user_id = user_id or user_ctx.get('user_id')
+            final_email = user_email or user_ctx.get('email')
+            final_role = user_role or user_ctx.get('role')
+            final_college = college_id or user_ctx.get('college_id')
+
+            req_info = {
+                'ip_address': request.remote_addr if request else None,
+                'user_agent': request.user_agent.string if request else None,
+                'request_path': request.path if request else None,
+                'request_method': request.method if request else None
             }
-        except RuntimeError:
-            # Outside of request context
-            return {
-                'ip_address': None,
-                'user_agent': None,
-                'request_path': None,
-                'request_method': None
-            }
-    
-    # =========================================================================
-    # LOGGING METHODS
-    # =========================================================================
-    
-    def log(self, 
-            action_type: str,
-            entity_type: str,
-            entity_id: str = None,
-            entity_name: str = None,
-            college_id: str = None,
-            old_value: Any = None,
-            new_value: Any = None,
-            change_summary: str = None,
-            severity: str = 'INFO',
-            user_id: str = None,
-            user_email: str = None,
-            user_role: str = None) -> bool:
-        """
-        Main audit logging method
-        
-        Args:
-            action_type: Type of action (CREATE, UPDATE, DELETE, etc.)
-            entity_type: Type of entity affected (user, college, schedule, etc.)
-            entity_id: ID of the affected entity
-            entity_name: Human-readable name of entity
-            college_id: College context (for tenant filtering)
-            old_value: Previous value (for updates)
-            new_value: New value (for creates/updates)
-            change_summary: Human-readable summary
-            severity: Log severity level
-            user_id: Override user ID (defaults to current user)
-            user_email: Override user email
-            user_role: Override user role
-        
-        Returns:
-            True if logging succeeded, False otherwise
-        """
-        user = self._get_user_context()
-        req_info = self._get_request_info()
-        
-        # Use provided values or fall back to context
-        final_user_id = user_id or user.get('user_id')
-        final_email = user_email or user.get('email')
-        final_role = user_role or user.get('role')
-        final_college = college_id or user.get('college_id')
-        
-        # Serialize complex values
-        if old_value and not isinstance(old_value, str):
-            old_value = json.dumps(old_value, default=str)
-        if new_value and not isinstance(new_value, str):
-            new_value = json.dumps(new_value, default=str)
-        
-        db = current_app.extensions['sqlalchemy']
-        with db.engine.connect() as conn:
-            try:
+
+            db = current_app.extensions['sqlalchemy']
+            with db.engine.connect() as conn:
                 conn.execute(text("""
                     INSERT INTO audit_logs (
                         log_id, college_id, user_id, user_email, user_role,
@@ -125,234 +46,59 @@ class AuditService:
                         severity, created_at
                     ) VALUES (:lid, :cid, :uid, :uemail, :urole, :atype, :etype, :eid, :ename, :old, :new, :sum, :ip, :ua, :path, :meth, :sev, :now)
                 """), {
-                    "lid": str(uuid.uuid4()),
-                    "cid": final_college,
-                    "uid": final_user_id,
-                    "uemail": final_email,
-                    "urole": final_role,
-                    "atype": action_type,
-                    "etype": entity_type,
-                    "eid": entity_id,
-                    "ename": entity_name,
-                    "old": old_value,
-                    "new": new_value,
-                    "sum": change_summary,
-                    "ip": req_info['ip_address'],
-                    "ua": req_info['user_agent'],
-                    "path": req_info['request_path'],
-                    "meth": req_info['request_method'],
-                    "sev": severity,
-                    "now": datetime.utcnow().isoformat()
+                    "lid": uuid.uuid4(),
+                    "cid": uuid.UUID(str(final_college)) if final_college else None,
+                    "uid": uuid.UUID(str(final_user_id)) if final_user_id else None,
+                    "uemail": final_email, "urole": final_role, "atype": action_type,
+                    "etype": entity_type, 
+                    "eid": uuid.UUID(str(entity_id)) if entity_id else None,
+                    "ename": entity_name, "old": str(old_value) if old_value else None,
+                    "new": str(new_value) if new_value else None, "sum": change_summary,
+                    "ip": req_info['ip_address'], "ua": req_info['user_agent'],
+                    "path": req_info['request_path'], "meth": req_info['request_method'],
+                    "sev": severity, "now": datetime.utcnow()
                 })
                 conn.commit()
                 return True
-            except Exception as e:
-                # Never fail the main operation due to audit logging
-                current_app.logger.error(f"Audit logging failed: {e}")
-                conn.rollback()
-                return False
-    
-    def log_login(self, 
-                  user_id: str, 
-                  user_email: str,
-                  college_id: str = None,
-                  success: bool = True) -> bool:
-        """Log login attempt"""
-        return self.log(
-            action_type=self.ACTION_LOGIN if success else self.ACTION_LOGIN_FAILED,
-            entity_type='session',
-            entity_id=user_id,
-            entity_name=user_email,
-            college_id=college_id,
-            change_summary='User logged in successfully' if success else 'Login attempt failed',
-            severity=self.SEVERITY_INFO if success else self.SEVERITY_WARNING,
-            user_id=user_id,
-            user_email=user_email
-        )
-    
-    def log_logout(self, user_id: str, user_email: str) -> bool:
-        """Log successful logout"""
-        return self.log(
-            action_type=self.ACTION_LOGOUT,
-            entity_type='session',
-            entity_id=user_id,
-            entity_name=user_email,
-            change_summary='User logged out',
-            severity=self.SEVERITY_INFO,
-            user_id=user_id,
-            user_email=user_email
-        )
-    
-    def log_security_event(self,
-                           event_type: str,
-                           details: str,
-                           college_id: str = None,
-                           severity: str = 'WARNING') -> bool:
-        """Log security-related event"""
-        return self.log(
-            action_type=self.ACTION_SECURITY_VIOLATION,
-            entity_type='security',
-            entity_name=event_type,
-            college_id=college_id,
-            new_value=details,
-            change_summary=f"{event_type}: {details[:100]}",
-            severity=severity
-        )
-    
-    # =========================================================================
-    # QUERY METHODS
-    # =========================================================================
-    
-    def get_logs(self,
-                 action_filter: str = None,
-                 entity_filter: str = None,
-                 severity_filter: str = None,
-                 from_date: datetime = None,
-                 to_date: datetime = None,
-                 page: int = 1,
-                 per_page: int = 50) -> Dict:
-        """
-        Get audit logs with role-based filtering
-        
-        Access Control:
-        - Super Admin: Can view ALL logs
-        - College Admin: Can view ONLY their college's logs
-        - Faculty/Staff: NO access
-        """
-        user = self._get_user_context()
-        
-        # Faculty/Staff have no access
-        if user['role'] in ('FACULTY', 'STAFF', 'STUDENT'):
-            return {'error': 'ACCESS_DENIED', 'message': 'You do not have access to audit logs'}
-        
-        if not user['role']:
-            return {'error': 'UNAUTHORIZED', 'message': 'Authentication required'}
-        
+        except Exception as e:
+            current_app.logger.error(f"Audit log failed: {e}")
+            return False
+
+    def get_logs(self, college_id: str = None, action_filter: str = None,
+                 entity_filter: str = None, severity_filter: str = None,
+                 page: int = 1, per_page: int = 50) -> Dict:
+        """Fetch audit logs with filtering"""
         db = current_app.extensions['sqlalchemy']
         with db.engine.connect() as conn:
-            query_parts = ["WHERE 1=1"]
+            query_parts = ["FROM audit_logs WHERE 1=1"]
             params = {}
-            
-            # Tenant filtering for College Admin
-            if user['role'] == 'COLLEGE_ADMIN':
-                query_parts.append("AND college_id = :cid")
-                params['cid'] = user['college_id']
-            
-            # Optional filters
+            if college_id:
+                query_parts.append("AND college_id = :cid"); params['cid'] = uuid.UUID(college_id)
             if action_filter:
-                query_parts.append("AND action_type = :atype")
-                params['atype'] = action_filter
-            
+                query_parts.append("AND action_type = :action"); params['action'] = action_filter
             if entity_filter:
-                query_parts.append("AND entity_type = :etype")
-                params['etype'] = entity_filter
-            
+                query_parts.append("AND entity_type = :entity"); params['entity'] = entity_filter
             if severity_filter:
-                query_parts.append("AND severity = :sev")
-                params['sev'] = severity_filter
+                query_parts.append("AND severity = :sev"); params['sev'] = severity_filter
             
-            if from_date:
-                query_parts.append("AND created_at >= :fdate")
-                params['fdate'] = from_date.isoformat()
-            
-            if to_date:
-                query_parts.append("AND created_at <= :tdate")
-                params['tdate'] = to_date.isoformat()
-            
-            filter_sql = " ".join(query_parts)
-            
-            # Count total
-            count_query = f"SELECT COUNT(*) FROM audit_logs {filter_sql}"
-            count_res = conn.execute(text(count_query), params).fetchone()
-            total = count_res[0]
-            
-            # Add pagination
-            sql = f"""
-                SELECT log_id, college_id, user_id, user_email, user_role,
-                       action_type, entity_type, entity_id, entity_name,
-                       change_summary, ip_address, severity, created_at
-                FROM audit_logs {filter_sql}
-                ORDER BY created_at DESC LIMIT :limit OFFSET :offset
-            """
+            base_q = " ".join(query_parts)
+            total = conn.execute(text(f"SELECT COUNT(*) {base_q}"), params).fetchone()[0]
             params.update({"limit": per_page, "offset": (page - 1) * per_page})
-            
-            res_items = conn.execute(text(sql), params)
-            logs = [dict(row._mapping) for row in res_items]
+            res = conn.execute(text(f"SELECT * {base_q} ORDER BY created_at DESC LIMIT :limit OFFSET :offset"), params)
             
             return {
-                'items': logs,
-                'total': total,
-                'page': page,
-                'per_page': per_page,
-                'pages': (total + per_page - 1) // per_page
+                'items': [dict(row._mapping) for row in res], 'total': total,
+                'page': page, 'per_page': per_page, 'pages': (total + per_page - 1) // per_page if per_page > 0 else 1
             }
-            
-    
-    def get_security_events(self,
-                            from_date: datetime = None,
-                            to_date: datetime = None,
-                            limit: int = 50) -> Dict:
-        """Get security events (Super Admin only)"""
-        user = self._get_user_context()
-        
-        if user['role'] != 'SUPER_ADMIN':
-            return {'error': 'ACCESS_DENIED', 'message': 'Only Super Admin can view security events'}
-        
-        from_date = from_date or (datetime.utcnow() - timedelta(days=7))
-        to_date = to_date or datetime.utcnow()
-        
+
+    def get_security_events(self, limit: int = 100) -> List[Dict]:
+        """Fetch high-severity security events"""
         db = current_app.extensions['sqlalchemy']
         with db.engine.connect() as conn:
-            sql = """
-                SELECT log_id, college_id, user_id, user_email, user_role,
-                       action_type, entity_type, entity_name, change_summary,
-                       ip_address, user_agent, severity, created_at
-                FROM audit_logs
-                WHERE (action_type LIKE '%SECURITY%' 
-                       OR action_type LIKE '%VIOLATION%'
-                       OR action_type = 'LOGIN_FAILED'
-                       OR severity IN ('WARNING', 'ERROR', 'CRITICAL'))
-                  AND created_at BETWEEN :fdate AND :tdate
-                ORDER BY created_at DESC
-                LIMIT :limit
-            """
-            res = conn.execute(text(sql), {"fdate": from_date.isoformat(), "tdate": to_date.isoformat(), "limit": limit})
-            events = [dict(row._mapping) for row in res]
-            
-            return {'items': events, 'total': len(events)}
-            
-    
-    def get_login_history(self, user_id: str, limit: int = 20) -> Dict:
-        """Get login history for a user"""
-        current_user = self._get_user_context()
-        
-        # Users can only see their own history, admins can see anyone
-        if current_user['role'] in ('FACULTY', 'STAFF', 'STUDENT'):
-            if current_user['user_id'] != user_id:
-                return {'error': 'ACCESS_DENIED', 'message': 'You can only view your own login history'}
-        
-        db = current_app.extensions['sqlalchemy']
-        with db.engine.connect() as conn:
-            sql = """
-                SELECT log_id, ip_address, user_agent, action_type, created_at
-                FROM audit_logs
-                WHERE user_id = :uid
-                  AND action_type IN ('LOGIN', 'LOGIN_FAILED', 'LOGOUT')
-                ORDER BY created_at DESC
-                LIMIT :limit
-            """
-            res = conn.execute(text(sql), {"uid": user_id, "limit": limit})
-            history = [dict(row._mapping) for row in res]
-            
-            return {'items': history, 'total': len(history)}
-
-
-# Singleton instance for easy import
-_audit_service = None
-
-def get_audit_service() -> AuditService:
-    """Get shared audit service instance"""
-    global _audit_service
-    if _audit_service is None:
-        _audit_service = AuditService()
-    return _audit_service
+            res = conn.execute(text("""
+                SELECT * FROM audit_logs 
+                WHERE severity IN ('WARNING', 'ERROR', 'CRITICAL') 
+                OR action_type LIKE 'SECURITY_%' 
+                ORDER BY created_at DESC LIMIT :limit
+            """), {"limit": limit})
+            return [dict(row._mapping) for row in res]
