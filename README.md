@@ -132,12 +132,6 @@ pip install -r requirements.txt
 cp .env.example .env
 # Edit .env with your configurations
 
-# Initialize database
-python scripts/init_db.py
-
-# Run migrations
-python scripts/migrate.py
-
 # Start the server
 python run.py
 ```
