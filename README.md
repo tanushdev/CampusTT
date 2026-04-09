@@ -332,5 +332,3 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## 🙏 Acknowledgments
 
 - Inspired by PCE (Pillai College of Engineering)
-- Built with ❤️ for educational institutions
-
