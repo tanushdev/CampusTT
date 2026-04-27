@@ -328,9 +328,3 @@ gunicorn -w 4 -b 0.0.0.0:5000 run:app
 MIT License - see [LICENSE](LICENSE) for details.
 
 ---
-
-## 🙏 Acknowledgments
-
-- Inspired by PCE (Pillai College of Engineering)
-- Built with ❤️ for educational institutions
-
